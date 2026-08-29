@@ -3,6 +3,7 @@ import {
   CircleHelp,
   Download,
   FolderOpen,
+  Home,
   LayoutTemplate,
   Moon,
   Play,
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ExportMenu } from "@/components/export/ExportMenu";
 import { LogoControls } from "@/components/logo/LogoControls";
+import { krumathHomeUrl } from "@/lib/krumathUrls";
 import { useEditorStore } from "@/stores/editorStore";
 import { useProjectStore } from "@/stores/projectStore";
 import { usePreviewStore } from "@/stores/previewStore";
@@ -57,9 +59,14 @@ export function AppHeader({ bridge }: AppHeaderProps) {
 
   return (
     <header className="flex h-10 shrink-0 items-center gap-2 border-b border-border bg-[var(--toolbar-bg)] px-3">
-      <span className="text-xs font-semibold tracking-wide text-muted-foreground">
-        Poster Studio
-      </span>
+      <a
+        href={krumathHomeUrl()}
+        className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-semibold tracking-wide text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+        title="KruMath Home"
+      >
+        <Home className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">Poster Studio</span>
+      </a>
       <div className="mx-1 h-4 w-px bg-border" />
       <Input
         value={name}

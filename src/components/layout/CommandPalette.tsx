@@ -18,7 +18,7 @@ interface CommandPaletteProps {
 export function CommandPalette({ bridge }: CommandPaletteProps) {
   const open = useUiStore((s) => s.commandPaletteOpen);
   const setOpen = useUiStore((s) => s.setCommandPaletteOpen);
-  const commands = usePosterCommands((format) => exportPoster(bridge, format));
+  const commands = usePosterCommands((format) => void exportPoster(bridge, format));
 
   const groups = [...new Set(commands.map((c) => c.group))];
 

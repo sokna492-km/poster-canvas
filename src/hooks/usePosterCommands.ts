@@ -134,7 +134,7 @@ export function usePosterCommands(onExport?: (format: ExportFormat) => void): Po
         group: "Canvas",
         run: () => {
           setCommandPaletteOpen(false);
-          requestLogoUpload();
+          void requestLogoUpload();
         },
       },
       {
