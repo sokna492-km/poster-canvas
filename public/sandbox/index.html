@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Poster Studio preview sandbox</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>
+      // Default stack: Latin → IBM Plex Sans; Khmer glyphs fall through to Kantumruy Pro.
+      // User code that sets font-family (style or Tailwind font-*) overrides this.
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: [
+                '"IBM Plex Sans"',
+                '"Kantumruy Pro"',
+                "system-ui",
+                "sans-serif",
+              ],
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Kantumruy+Pro:wght@300;400;500;600;700&family=Playfair+Display:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        font-family: "IBM Plex Sans", "Kantumruy Pro", system-ui, sans-serif;
+      }
+      #poster-root {
+        overflow: hidden;
+        position: relative;
+      }
+      #fallback {
+        font:
+          14px "JetBrains Mono",
+          monospace;
+        color: #a1a1aa;
+        padding: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="poster-root"><div id="fallback">Loading sandbox…</div></div>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
