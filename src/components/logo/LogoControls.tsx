@@ -13,6 +13,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { LogoCorner } from "@/core/types";
 import { fileToLogoAsset } from "@/lib/logoAsset";
+import { requireSignedInForAction } from "@/lib/requireSignedInForAction";
 import { codeUsesInlineLogo } from "@/lib/logoSlot";
 import { cn } from "@/lib/utils";
 import { useEditorStore } from "@/stores/editorStore";
@@ -29,8 +30,9 @@ const HEIGHTS = ["40", "64", "96", "128"] as const;
 
 const LOGO_UPLOAD_EVENT = "poster-studio:add-logo";
 
-/** Opens the logo file picker (command palette / external). */
-export function requestLogoUpload(): void {
+/** Opens the logo file picker (command palette / external). Soft-gated for signed-in users. */
+export async function requestLogoUpload(): Promise<void> {
+  if ((await requireSignedInForAction()) === false) return;
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event(LOGO_UPLOAD_EVENT));
   }
@@ -59,6 +61,11 @@ export function LogoControls() {
     window.addEventListener(LOGO_UPLOAD_EVENT, onRequest);
     return () => window.removeEventListener(LOGO_UPLOAD_EVENT, onRequest);
   }, []);
+
+  const openFilePicker = async () => {
+    if ((await requireSignedInForAction()) === false) return;
+    inputRef.current?.click();
+  };
 
   const onFile = async (file: File | undefined) => {
     if (!file) return;
@@ -120,7 +127,7 @@ export function LogoControls() {
             size="sm"
             className="h-8 flex-1 gap-1.5 text-xs"
             disabled={busy || !current}
-            onClick={() => inputRef.current?.click()}
+            onClick={() => void openFilePicker()}
           >
             <Upload className="h-3.5 w-3.5" />
             {logo ? "Replace" : "Upload"}

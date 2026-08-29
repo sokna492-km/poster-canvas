@@ -1,0 +1,21 @@
+import { createClientOnlyFn } from "@tanstack/react-start";
+
+import { isPlayableUser } from "@/lib/authUser";
+import { publicAppPath, signInUrl } from "@/lib/krumathUrls";
+
+/**
+ * Soft gate for Export / Add Logo (browser only).
+ * Returns true when the action may proceed; false after redirecting to sign-in.
+ * Skipped in DEV so local editing stays frictionless (no krumath.com cookies).
+ */
+export const requireSignedInForAction = createClientOnlyFn(async (): Promise<boolean> => {
+  if (import.meta.env.DEV) return true;
+
+  const { getBrowserUser } = await import("@/lib/supabase.client");
+  const user = await getBrowserUser();
+  if (!isPlayableUser(user)) {
+    window.location.assign(signInUrl(publicAppPath("/")));
+    return false;
+  }
+  return true;
+});

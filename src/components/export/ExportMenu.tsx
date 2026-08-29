@@ -28,7 +28,7 @@ export function ExportMenu({ bridge, children }: ExportMenuProps) {
       toast.error("Preview not ready");
       return;
     }
-    exportPoster(bridge, format);
+    void exportPoster(bridge, format);
   };
 
   return (
@@ -36,7 +36,7 @@ export function ExportMenu({ bridge, children }: ExportMenuProps) {
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {FORMATS.map(({ format, label }) => (
-          <DropdownMenuItem key={format} onClick={() => handleExport(format)}>
+          <DropdownMenuItem key={format} onClick={() => void handleExport(format)}>
             {label}
           </DropdownMenuItem>
         ))}
