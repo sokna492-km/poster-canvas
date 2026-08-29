@@ -1,6 +1,8 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { WithTooltip } from "@/components/ui/tooltip";
+import { useViewportTier } from "@/hooks/use-viewport-tier";
 import { useEditorStore } from "@/stores/editorStore";
 import { usePreviewStore } from "@/stores/previewStore";
 import { useProjectStore } from "@/stores/projectStore";
@@ -24,6 +26,8 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export function StatusBar() {
+  const tier = useViewportTier();
+  const compact = tier !== "large";
   const status = usePreviewStore((s) => s.status);
   const diagnostics = usePreviewStore((s) => s.diagnostics);
   const previewStale = usePreviewStore((s) => s.previewStale);
@@ -34,6 +38,9 @@ export function StatusBar() {
 
   const errors = diagnostics.filter((d) => d.severity === "error");
   const warnings = diagnostics.filter((d) => d.severity === "warning");
+  const width = current?.width ?? 1080;
+  const height = current?.height ?? 1350;
+  const consoleLabel = consoleExpanded ? "Collapse console" : "Expand console";
 
   useEffect(() => {
     if (errors.length > 0) setConsoleExpanded(true);
@@ -60,26 +67,49 @@ export function StatusBar() {
             {warnings.length} warning{warnings.length !== 1 ? "s" : ""}
           </span>
         )}
-        <span className="ml-auto tabular-nums">
-          {current?.width ?? 1080} × {current?.height ?? 1350}
-        </span>
-        {previewStale && <span>Preview out of date</span>}
-        {dirty && <span>Unsaved</span>}
+        <WithTooltip label={`${width} × ${height}`}>
+          <span className="ml-auto cursor-default tabular-nums">
+            {compact ? `${width}×${height}` : `${width} × ${height}`}
+          </span>
+        </WithTooltip>
+        {previewStale &&
+          (compact ? (
+            <WithTooltip label="Preview out of date">
+              <span
+                className="inline-block h-2 w-2 shrink-0 cursor-default rounded-full bg-amber-400"
+                aria-label="Preview out of date"
+              />
+            </WithTooltip>
+          ) : (
+            <span>Preview out of date</span>
+          ))}
+        {dirty &&
+          (compact ? (
+            <WithTooltip label="Unsaved changes">
+              <span className="cursor-default" aria-label="Unsaved changes">
+                ●
+              </span>
+            </WithTooltip>
+          ) : (
+            <span>Unsaved</span>
+          ))}
         {(errors.length > 0 || warnings.length > 0) && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-5 w-5 p-0"
-            onClick={() => setConsoleExpanded(!consoleExpanded)}
-            aria-label={consoleExpanded ? "Collapse console" : "Expand console"}
-          >
-            {consoleExpanded ? (
-              <ChevronDown className="h-3 w-3" />
-            ) : (
-              <ChevronUp className="h-3 w-3" />
-            )}
-          </Button>
+          <WithTooltip label={consoleLabel}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-5 w-5 p-0"
+              onClick={() => setConsoleExpanded(!consoleExpanded)}
+              aria-label={consoleLabel}
+            >
+              {consoleExpanded ? (
+                <ChevronDown className="h-3 w-3" />
+              ) : (
+                <ChevronUp className="h-3 w-3" />
+              )}
+            </Button>
+          </WithTooltip>
         )}
       </div>
       {consoleExpanded && diagnostics.length > 0 && (

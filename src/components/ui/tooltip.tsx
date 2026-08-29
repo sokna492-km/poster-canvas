@@ -29,4 +29,26 @@ const TooltipContent = React.forwardRef<
 ));
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+/** Wrap a single interactive child with the shared PreviewToolbar-style tooltip. */
+function WithTooltip({
+  label,
+  children,
+  side,
+  align,
+}: {
+  label: string;
+  children: React.ReactElement;
+  side?: React.ComponentPropsWithoutRef<typeof TooltipContent>["side"];
+  align?: React.ComponentPropsWithoutRef<typeof TooltipContent>["align"];
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent {...(side ? { side } : {})} {...(align ? { align } : {})}>
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider, WithTooltip };

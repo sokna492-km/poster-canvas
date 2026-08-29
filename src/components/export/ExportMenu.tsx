@@ -6,6 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { WithTooltip } from "@/components/ui/tooltip";
 import { exportPoster } from "@/lib/exportPoster";
 import { toast } from "sonner";
 
@@ -19,7 +20,7 @@ const FORMATS: { format: ExportFormat; label: string }[] = [
 
 interface ExportMenuProps {
   bridge: SandboxBridge | null;
-  children: React.ReactNode;
+  children: React.ReactElement;
 }
 
 export function ExportMenu({ bridge, children }: ExportMenuProps) {
@@ -33,7 +34,9 @@ export function ExportMenu({ bridge, children }: ExportMenuProps) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+      <WithTooltip label="Export">
+        <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+      </WithTooltip>
       <DropdownMenuContent align="end">
         {FORMATS.map(({ format, label }) => (
           <DropdownMenuItem key={format} onClick={() => void handleExport(format)}>

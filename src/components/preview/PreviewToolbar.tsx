@@ -1,6 +1,6 @@
 import { Grid3x3, Minus, Plus, RefreshCw, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { WithTooltip } from "@/components/ui/tooltip";
 import { usePreviewStore } from "@/stores/previewStore";
 
 export function PreviewToolbar() {
@@ -58,19 +58,16 @@ function ToolbarButton({
   children: React.ReactNode;
 }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant={active ? "secondary" : "ghost"}
-          size="sm"
-          className="h-7 px-2 text-xs"
-          onClick={onClick}
-        >
-          {children}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
+    <WithTooltip label={label}>
+      <Button
+        type="button"
+        variant={active ? "secondary" : "ghost"}
+        size="sm"
+        className="h-7 px-2 text-xs"
+        onClick={onClick}
+      >
+        {children}
+      </Button>
+    </WithTooltip>
   );
 }
