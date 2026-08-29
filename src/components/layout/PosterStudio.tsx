@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { SizePickerDialog } from "@/components/layout/SizePickerDialog";
@@ -51,18 +52,20 @@ export function PosterStudio() {
   }, [setOnboardingOpen]);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background">
-      <AppHeader bridge={bridge} />
-      <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <StudioLayoutShell iframeRef={iframeRef} />
-      </main>
-      <StatusBar />
-      <TemplatesDialog />
-      <ProjectManagerDialog />
-      <SizePickerDialog />
-      <OnboardingDialog />
-      <CommandPalette bridge={bridge} />
-      <Toaster position="bottom-right" />
-    </div>
+    <TooltipProvider delayDuration={300}>
+      <div className="flex h-screen flex-col overflow-hidden bg-background">
+        <AppHeader bridge={bridge} />
+        <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <StudioLayoutShell iframeRef={iframeRef} />
+        </main>
+        <StatusBar />
+        <TemplatesDialog />
+        <ProjectManagerDialog />
+        <SizePickerDialog />
+        <OnboardingDialog />
+        <CommandPalette bridge={bridge} />
+        <Toaster position="bottom-right" />
+      </div>
+    </TooltipProvider>
   );
 }

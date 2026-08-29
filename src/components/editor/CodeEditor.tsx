@@ -3,7 +3,7 @@ import type { editor as MonacoEditor } from "monaco-editor";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { WithTooltip } from "@/components/ui/tooltip";
 import type { Diagnostic } from "@/core/types";
 import { buildPosterAiPrompt } from "@/data/aiPrompt";
 import { DEFAULT_SIZE } from "@/data/sizes";
@@ -106,21 +106,18 @@ export function CodeEditor({ className }: CodeEditorProps) {
       </Suspense>
 
       <div className="pointer-events-none absolute bottom-3 right-8 z-10">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="secondary"
-              size="icon"
-              className="pointer-events-auto h-8 w-8 shadow-md"
-              aria-label="Copy AI prompt"
-              onClick={() => void copyAiPrompt()}
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="left">Copy AI prompt</TooltipContent>
-        </Tooltip>
+        <WithTooltip label="Copy AI prompt" side="left">
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            className="pointer-events-auto h-8 w-8 shadow-md"
+            aria-label="Copy AI prompt"
+            onClick={() => void copyAiPrompt()}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+          </Button>
+        </WithTooltip>
       </div>
     </div>
   );

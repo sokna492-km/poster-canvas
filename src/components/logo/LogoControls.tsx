@@ -3,6 +3,7 @@ import { ImageIcon, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { WithTooltip } from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -38,7 +39,23 @@ export async function requestLogoUpload(): Promise<void> {
   }
 }
 
-export function LogoControls() {
+const OPEN_LOGO_EVENT = "poster-studio:open-logo";
+
+/** Opens the logo popover (header overflow / external). */
+export function requestLogoPanel(): void {
+  if (typeof window === "undefined") return;
+  // Defer so dropdown menus can close before the popover opens.
+  window.setTimeout(() => {
+    window.dispatchEvent(new Event(OPEN_LOGO_EVENT));
+  }, 0);
+}
+
+interface LogoControlsProps {
+  /** When false, trigger is visually hidden but stays mounted for event-driven open. */
+  visible?: boolean;
+}
+
+export function LogoControls({ visible = true }: LogoControlsProps) {
   const code = useEditorStore((s) => s.code);
   const current = useProjectStore((s) => s.current);
   const setLogo = useProjectStore((s) => s.setLogo);
@@ -54,12 +71,17 @@ export function LogoControls() {
   const placementDisabled = !logo || inlineLogo;
 
   useEffect(() => {
-    const onRequest = () => {
+    const onUpload = () => {
       setOpen(true);
       inputRef.current?.click();
     };
-    window.addEventListener(LOGO_UPLOAD_EVENT, onRequest);
-    return () => window.removeEventListener(LOGO_UPLOAD_EVENT, onRequest);
+    const onOpen = () => setOpen(true);
+    window.addEventListener(LOGO_UPLOAD_EVENT, onUpload);
+    window.addEventListener(OPEN_LOGO_EVENT, onOpen);
+    return () => {
+      window.removeEventListener(LOGO_UPLOAD_EVENT, onUpload);
+      window.removeEventListener(OPEN_LOGO_EVENT, onOpen);
+    };
   }, []);
 
   const openFilePicker = async () => {
@@ -88,19 +110,26 @@ export function LogoControls() {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-7 gap-1.5 px-2 text-xs"
-          title="Logo"
-          disabled={!current}
-        >
-          <ImageIcon className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Logo</span>
-        </Button>
-      </PopoverTrigger>
+      <WithTooltip label="Logo">
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-7 gap-1.5 px-2 text-xs",
+              !visible && "pointer-events-none absolute h-0 w-0 overflow-hidden opacity-0",
+            )}
+            disabled={!current}
+            tabIndex={visible ? undefined : -1}
+            aria-hidden={!visible}
+            aria-label="Logo"
+          >
+            <ImageIcon className="h-3.5 w-3.5" />
+            <span className="hidden lg:inline">Logo</span>
+          </Button>
+        </PopoverTrigger>
+      </WithTooltip>
       <PopoverContent align="end" className="w-72 space-y-3 p-3">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-medium">Brand logo</p>

@@ -7,6 +7,9 @@
 /*
  * Design system definition.
  *
+ * Brand: KruMath blue #2563eb (favicon / icon-512 / horizontal logo).
+ * Neutrals: slate with blue hue to match "iNTERactive" gray (#94a3b8).
+ *
  * The @theme inline block maps CSS custom properties to Tailwind utility
  * classes (e.g. --color-primary -> bg-primary, text-primary).
  *
@@ -48,53 +51,58 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  /* Surfaces */
+  --background: oklch(0.995 0.004 255);
+  --foreground: oklch(0.208 0.04 265.8);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.208 0.04 265.8);
+  /* Brand blue #2563eb */
+  --primary: oklch(0.546 0.215 262.9);
+  --primary-foreground: oklch(1 0 0);
+  /* Soft blue-tinted chrome */
+  --secondary: oklch(0.97 0.014 254.6);
+  --secondary-foreground: oklch(0.379 0.138 265.5);
+  --muted: oklch(0.97 0.014 254.6);
+  --muted-foreground: oklch(0.554 0.041 257.4);
+  --accent: oklch(0.932 0.032 255.6);
+  --accent-foreground: oklch(0.379 0.138 265.5);
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --editor-bg: oklch(0.98 0.005 260);
-  --editor-gutter: oklch(0.95 0.005 260);
-  --preview-bg: oklch(0.96 0.005 260);
-  --toolbar-bg: oklch(0.98 0.003 260);
-  --statusbar-bg: oklch(0.97 0.004 260);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.91 0.02 255);
+  --input: oklch(0.91 0.02 255);
+  --ring: oklch(0.546 0.215 262.9);
+  --editor-bg: oklch(0.99 0.006 255);
+  --editor-gutter: oklch(0.97 0.01 255);
+  --preview-bg: oklch(0.96 0.012 255);
+  --toolbar-bg: oklch(0.99 0.005 255);
+  --statusbar-bg: oklch(0.97 0.01 255);
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
+  /* Near-black with blue undertone (logo-on-black) */
+  --background: oklch(0.145 0.028 264);
+  --foreground: oklch(0.98 0.005 255);
+  --popover: oklch(0.2 0.035 264);
+  --popover-foreground: oklch(0.98 0.005 255);
+  /* Brand blue stays vivid on dark */
+  --primary: oklch(0.623 0.188 259.8);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.25 0.04 264);
+  --secondary-foreground: oklch(0.98 0.005 255);
+  --muted: oklch(0.25 0.04 264);
+  --muted-foreground: oklch(0.711 0.035 256.8);
+  --accent: oklch(0.28 0.055 262);
+  --accent-foreground: oklch(0.98 0.005 255);
   --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --editor-bg: oklch(0.14 0.02 260);
-  --editor-gutter: oklch(0.18 0.02 260);
-  --preview-bg: oklch(0.12 0.02 260);
-  --toolbar-bg: oklch(0.16 0.02 260);
-  --statusbar-bg: oklch(0.14 0.02 260);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.623 0.188 259.8);
+  --editor-bg: oklch(0.16 0.03 264);
+  --editor-gutter: oklch(0.19 0.032 264);
+  --preview-bg: oklch(0.14 0.028 264);
+  --toolbar-bg: oklch(0.17 0.03 264);
+  --statusbar-bg: oklch(0.15 0.028 264);
 }
 
 @layer base {

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { WithTooltip } from "@/components/ui/tooltip";
 import { useProjectStore } from "@/stores/projectStore";
 import { useUiStore } from "@/stores/uiStore";
 
@@ -37,7 +38,7 @@ export function ProjectManagerDialog() {
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+        <DialogContent className="max-h-[85dvh] max-w-lg overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Projects</DialogTitle>
           </DialogHeader>
@@ -62,42 +63,48 @@ export function ProjectManagerDialog() {
                     </div>
                   </button>
                   {current?.id === project.id && <span className="text-xs text-primary">Open</span>}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    title="Rename"
-                    onClick={() => {
-                      setRenameId(project.id);
-                      setRenameValue(project.name);
-                    }}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    title="Duplicate"
-                    onClick={() => {
-                      if (current?.id === project.id) void duplicateProject();
-                      else void openProject(project.id).then(() => duplicateProject());
-                    }}
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-destructive"
-                    title="Delete"
-                    onClick={() => setDeleteId(project.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  <WithTooltip label="Rename">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      aria-label="Rename"
+                      onClick={() => {
+                        setRenameId(project.id);
+                        setRenameValue(project.name);
+                      }}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  </WithTooltip>
+                  <WithTooltip label="Duplicate">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      aria-label="Duplicate"
+                      onClick={() => {
+                        if (current?.id === project.id) void duplicateProject();
+                        else void openProject(project.id).then(() => duplicateProject());
+                      }}
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                  </WithTooltip>
+                  <WithTooltip label="Delete">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-destructive"
+                      aria-label="Delete"
+                      onClick={() => setDeleteId(project.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </WithTooltip>
                 </li>
               ))}
             </ul>

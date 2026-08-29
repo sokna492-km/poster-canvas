@@ -9,11 +9,14 @@ import { syncPreviewBackgroundWithTheme } from "@/stores/previewStore";
 
 export type { ThemeMode };
 
-export type MobileTab = "code" | "preview";
+export type WorkspaceTab = "code" | "preview";
+
+/** @deprecated Use WorkspaceTab */
+export type MobileTab = WorkspaceTab;
 
 interface UiState {
   theme: ThemeMode;
-  mobileTab: MobileTab;
+  workspaceTab: WorkspaceTab;
   templatesOpen: boolean;
   projectsOpen: boolean;
   sizePickerOpen: boolean;
@@ -22,7 +25,7 @@ interface UiState {
   onboardingOpen: boolean;
   setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
-  setMobileTab: (tab: MobileTab) => void;
+  setWorkspaceTab: (tab: WorkspaceTab) => void;
   setTemplatesOpen: (open: boolean) => void;
   setProjectsOpen: (open: boolean) => void;
   setSizePickerOpen: (open: boolean) => void;
@@ -33,7 +36,7 @@ interface UiState {
 
 export const useUiStore = create<UiState>((set, get) => ({
   theme: readStoredTheme(),
-  mobileTab: "code",
+  workspaceTab: "code",
   templatesOpen: false,
   projectsOpen: false,
   sizePickerOpen: false,
@@ -53,7 +56,7 @@ export const useUiStore = create<UiState>((set, get) => ({
     syncPreviewBackgroundWithTheme(next);
     set({ theme: next });
   },
-  setMobileTab: (mobileTab) => set({ mobileTab }),
+  setWorkspaceTab: (workspaceTab) => set({ workspaceTab }),
   setTemplatesOpen: (templatesOpen) => set({ templatesOpen }),
   setProjectsOpen: (projectsOpen) => set({ projectsOpen }),
   setSizePickerOpen: (sizePickerOpen) => set({ sizePickerOpen }),
