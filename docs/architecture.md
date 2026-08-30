@@ -42,4 +42,4 @@ Logo uploads live on `PosterProject.assets` (data URLs) and are not inlined into
 - **editorStore** — code buffer, dirty flag, run nonce
 - **previewStore** — zoom, fit, grid, diagnostics, render status
 - **projectStore** — active project, CRUD via repository
-- **uiStore** — theme, modals, mobile tab
+- **uiStore** — theme, modals, workspace tab

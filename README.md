@@ -17,14 +17,14 @@ User poster code never runs in the main application — it is compiled and rende
 
 ## Tech stack
 
-| Layer | Choice |
-| ----- | ------ |
+| Layer     | Choice                    |
+| --------- | ------------------------- |
 | Framework | TanStack Start (React 19) |
-| Bundler | Vite 8 |
-| Styling | Tailwind CSS 4 |
-| Editor | Monaco |
-| State | Zustand |
-| Tests | Vitest |
+| Bundler   | Vite 8                    |
+| Styling   | Tailwind CSS 4            |
+| Editor    | Monaco                    |
+| State     | Zustand                   |
+| Tests     | Vitest                    |
 
 ## Prerequisites
 
@@ -52,26 +52,29 @@ On first visit, a short guided tour explains the AI-prompt → paste → run wor
 
 Environment variables are loaded from `.env`. See [`.env.example`](.env.example).
 
-| Variable | Description |
-| -------- | ----------- |
-| `VITE_API_BASE_URL` | Optional API base URL for backend integration |
-| `VITE_BASE_PATH` | App URL prefix. Defaults to `/poster-canvas`. Set to `/` for root deployment |
+| Variable                 | Description                                                                  |
+| ------------------------ | ---------------------------------------------------------------------------- |
+| `VITE_API_BASE_URL`      | Optional API base URL for backend integration                                |
+| `VITE_BASE_PATH`         | App URL prefix. Defaults to `/poster-canvas`. Set to `/` for root deployment |
+| `VITE_SUPABASE_URL`      | Supabase project URL (required for production soft gate)                     |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon / publishable key                                              |
+| `VITE_KRUMATH_ORIGIN`    | Optional local KruMath origin for sign-in / home redirects                   |
 
 ## Scripts
 
-| Script | Description |
-| ------ | ----------- |
-| `npm run dev` | Start the development server |
-| `npm run build` | Production build |
-| `npm run preview` | Preview the production build |
-| `npm run lint` | Run ESLint |
-| `npm run format` | Format with Prettier |
-| `npm run test` | Run unit tests (Vitest) |
+| Script              | Description                       |
+| ------------------- | --------------------------------- |
+| `npm run dev`       | Start the development server      |
+| `npm run build`     | Production build                  |
+| `npm run preview`   | Preview the production build      |
+| `npm run lint`      | Run ESLint                        |
+| `npm run format`    | Format with Prettier              |
+| `npm run test`      | Run unit tests (Vitest)           |
 | `npm run typecheck` | TypeScript check (`tsc --noEmit`) |
 
 ## Creating posters
 
-Export a React component and use `@poster/core` helpers or plain HTML / Tailwind:
+Export a React component and use `@poster/core` helpers or plain HTML / Tailwind. (`@poster/core` is a **sandbox virtual import** provided by the preview runtime — not an npm workspace package.)
 
 ```tsx
 import { Poster, Text, Stack } from "@poster/core";
@@ -151,14 +154,14 @@ docs/             # Architecture and API documentation
 
 ## Documentation
 
-| Document | Topic |
-| -------- | ----- |
-| [Architecture](docs/architecture.md) | Layers, data flow, security |
-| [Rendering](docs/rendering.md) | Sandbox preview pipeline |
-| [Exporting](docs/exporting.md) | Export formats and flow |
-| [Templates](docs/templates.md) | Starter templates |
-| [Poster API](docs/poster-api.md) | `@poster/core` components |
-| [Integration](docs/integration.md) | Embedding and subpath deploy |
+| Document                             | Topic                        |
+| ------------------------------------ | ---------------------------- |
+| [Architecture](docs/architecture.md) | Layers, data flow, security  |
+| [Rendering](docs/rendering.md)       | Sandbox preview pipeline     |
+| [Exporting](docs/exporting.md)       | Export formats and flow      |
+| [Templates](docs/templates.md)       | Starter templates            |
+| [Poster API](docs/poster-api.md)     | `@poster/core` components    |
+| [Integration](docs/integration.md)   | Embedding and subpath deploy |
 
 ## Contributing
 

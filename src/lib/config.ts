@@ -23,7 +23,3 @@ export function getProjectRepository(): ProjectRepository {
 export function getAuthProvider(): AuthProvider {
   return config.authProvider;
 }
-
-export function getApiBaseUrl(): string | undefined {
-  return config.apiBaseUrl;
-}

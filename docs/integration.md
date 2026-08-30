@@ -1,8 +1,6 @@
 # Integration
 
-Poster Studio is designed to embed inside larger products (e.g. [krumath.com](https://krumath.com)).
-
-For mounting under **krumath.com/poster-canvas** (Cloudflare Worker + soft auth gate), see also [KRUMATH_GAME_INTEGRATION.md](./KRUMATH_GAME_INTEGRATION.md). Soft-gate specifics for this app are below.
+Poster Studio is designed to embed inside larger products (e.g. [krumath.com](https://krumath.com)). Soft-gate specifics for mounting under **krumath.com/poster-canvas** are below.
 
 ## KruMath soft gate (`/poster-canvas`)
 
@@ -15,6 +13,8 @@ Anyone may open the studio and edit. **Export** and **Add Logo** (upload/replace
 - Session: same Supabase project and `.krumath.com` cookies as KruMath (not Firebase).
 - Dev: the soft gate is skipped (`import.meta.env.DEV`) so local editing works without cookies.
 - Deploy: Cloudflare Worker via Nitro (`npm run deploy`). Route `krumath.com/poster-canvas*` to the `poster-canvas` Worker (more specific than the main `krumath` Worker).
+
+**Security note:** This soft gate is **client-side only**. It is not a hard server security boundary. Do not treat it as authorization for protected APIs or secrets.
 
 ### Operator checklist
 
@@ -30,6 +30,7 @@ Anyone may open the studio and edit. **Export** and **Add Logo** (upload/replace
 ### KruMath home card (operator — separate PR)
 
 In `apps/web/src/components/dashboard/GameSection.tsx`, add a card with `href: '/poster-canvas'` (same pattern as `RACER_HREF`). Do this **after** the Worker route works so the link is not dead.
+
 ## Configuration
 
 ```typescript
@@ -98,13 +99,13 @@ Maps 1:1 to a future database record. Older records without `assets` / `logoSlot
 
 ## Environment
 
-| Variable                 | Description                                                                 |
-| ------------------------ | --------------------------------------------------------------------------- |
-| `VITE_API_BASE_URL`      | Optional API base for future backend calls                                  |
+| Variable                 | Description                                                                  |
+| ------------------------ | ---------------------------------------------------------------------------- |
+| `VITE_API_BASE_URL`      | Optional API base for future backend calls                                   |
 | `VITE_BASE_PATH`         | App URL prefix. Defaults to `/poster-canvas`. Set to `/` for root deployment |
-| `VITE_SUPABASE_URL`      | Same as KruMath `NEXT_PUBLIC_SUPABASE_URL` (required for production gate)   |
-| `VITE_SUPABASE_ANON_KEY` | Same as KruMath `NEXT_PUBLIC_SUPABASE_ANON_KEY`                             |
-| `VITE_KRUMATH_ORIGIN`    | Optional local KruMath origin for sign-in / home redirects                  |
+| `VITE_SUPABASE_URL`      | Same as KruMath `NEXT_PUBLIC_SUPABASE_URL` (required for production gate)    |
+| `VITE_SUPABASE_ANON_KEY` | Same as KruMath `NEXT_PUBLIC_SUPABASE_ANON_KEY`                              |
+| `VITE_KRUMATH_ORIGIN`    | Optional local KruMath origin for sign-in / home redirects                   |
 
 See `.env.example`.
 

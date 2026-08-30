@@ -1,6 +1,11 @@
 {
   "name": "poster-canvas",
   "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sokna492-km/poster-canvas.git"
+  },
   "sideEffects": false,
   "type": "module",
   "scripts": {

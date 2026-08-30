@@ -15,12 +15,15 @@ dist-ssr
 .tanstack/**
 .nitro
 *.local
+coverage/
+*.tsbuildinfo
 
 # Env / secrets (keep .env.example tracked)
 .env
 .env.*
 !.env.example
 .dev.vars
+dev.vars
 *.pem
 *.p12
 *.key
@@ -38,8 +41,18 @@ secrets/
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Personal / agent files (safety net if ever copied into this repo)
+SOUL.md
+USER.md
+MEMORY.md
+AGENTS.md
+BOOTSTRAP.md
+HEARTBEAT.md
+memory/

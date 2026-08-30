@@ -1,18 +1,10 @@
 import { create } from "zustand";
-import {
-  applyThemeToDocument,
-  persistTheme,
-  readStoredTheme,
-  type ThemeMode,
-} from "@/lib/theme";
+import { applyThemeToDocument, persistTheme, readStoredTheme, type ThemeMode } from "@/lib/theme";
 import { syncPreviewBackgroundWithTheme } from "@/stores/previewStore";
 
 export type { ThemeMode };
 
 export type WorkspaceTab = "code" | "preview";
-
-/** @deprecated Use WorkspaceTab */
-export type MobileTab = WorkspaceTab;
 
 interface UiState {
   theme: ThemeMode;
