@@ -160,6 +160,174 @@ export const STARTER_CODE = `export default function Poster() {
 
 export const TEMPLATES: PosterTemplate[] = [
   {
+    id: "phnom-penh-boulevards",
+    name: "Phnom Penh Boulevards",
+    category: "Education",
+    description: "Six main boulevards guide for new students in Phnom Penh.",
+    width: 1080,
+    height: 1080,
+    code: `export default function Poster() {
+  const boulevards = [
+    {
+      num: "01",
+      name: "មហាវិថី សហព័ន្ធរុស្ស៊ី",
+      tag: "តំបន់សាកលវិទ្យាល័យធំៗ",
+      badgeColor: "bg-sky-100 text-sky-950 border-sky-300",
+      landmarks: ["RUPP (ភូមិន្ទ)", "ITC (តិចណូ)", "IFL (ភាសា)", "ព្រលានយន្តហោះចាស់"],
+    },
+    {
+      num: "02",
+      name: "មហាវិថី ព្រះមុនីវង្ស",
+      tag: "សរសៃឈាមកណ្តាលក្រុង",
+      badgeColor: "bg-blue-100 text-blue-950 border-blue-300",
+      landmarks: ["ស្ថានីយរថភ្លើង", "ផ្សារធំថ្មី", "ពេទ្យកាល់ម៉ែត", "ស្ពានច្បារអំពៅ"],
+    },
+    {
+      num: "03",
+      name: "មហាវិថី ព្រះនរោត្តម",
+      tag: "រដ្ឋបាល & ច្បាប់",
+      badgeColor: "bg-indigo-100 text-indigo-950 border-indigo-300",
+      landmarks: ["វិមានឯករាជ្យ", "សាលាច្បាប់ (RULE)", "ស្ពានក្បាលថ្នល់", "ក្រសួងអប់រំ"],
+    },
+    {
+      num: "04",
+      name: "មហាវិថី ម៉ៅសេទុង",
+      tag: "ពាណិជ្ជកម្ម & សាលារៀន",
+      badgeColor: "bg-cyan-100 text-cyan-950 border-cyan-300",
+      landmarks: ["ផ្សារដើមគ", "ស្ថានទូតចិន", "ផ្សារបឹងកេងកង", "ស្ពានអាកាស ៧មករា"],
+    },
+    {
+      num: "05",
+      name: "មហាវិថី ព្រះស៊ីសុវត្ថិ",
+      tag: "មាត់ទន្លេ & លំហែកាយ",
+      badgeColor: "bg-teal-100 text-teal-950 border-teal-300",
+      landmarks: ["មាត់ទន្លេបួនមុខ", "ព្រះបរមរាជវាំង", "ផ្សាររាត្រី", "សាលាវិចិត្រសិល្បៈ"],
+    },
+    {
+      num: "06",
+      name: "មហាវិថី សម្តេចហ៊ុនសែន",
+      tag: "ផ្លូវ ៦០ ម៉ែត្រ",
+      badgeColor: "bg-emerald-100 text-emerald-950 border-emerald-300",
+      landmarks: ["ផ្សារទំនើប អ៊ីអន ៣", "ផ្លូវ ២៧១", "ច្រកចេញក្រវាត់ក្រុង", "តំបន់ពង្រីកក្រុង"],
+    },
+  ];
+
+  return (
+    <div className="w-full h-full relative overflow-hidden bg-gradient-to-br from-white via-sky-50 to-sky-100 text-slate-900 font-sans flex flex-col justify-between p-7 select-none">
+
+      {/* Background Glows */}
+      <div className="absolute -top-12 -right-12 w-96 h-96 bg-sky-200/50 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-12 -left-12 w-96 h-96 bg-cyan-200/50 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Header Section */}
+      <header className="relative z-10 shrink-0">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-sky-600/10 border-2 border-sky-400/50 text-sky-950 text-base font-bold mb-1">
+          <span className="text-lg">🎓</span>
+          <span className="text-[20px]">សម្រាប់និស្សិតថ្មីមកពីខេត្ត</span>
+        </div>
+
+        <h1 className="text-[52px] font-black text-slate-950 tracking-tight leading-tight">
+          ផ្លូវសំខាន់ៗនៅទីក្រុងភ្នំពេញ
+        </h1>
+
+        <p className="text-xl font-bold text-sky-900 mt-0.5 text-right">
+          ស្គាល់ ៦ មហាវិថីស្នូល ធ្វើដំណើរទៅរៀនមិនបារម្ភរឿងវង្វេងផ្លូវ
+        </p>
+      </header>
+
+      {/* Main 6 Boulevards Grid */}
+      <main className="relative z-10 flex-1 grid grid-cols-2 grid-rows-3 gap-3.5 my-2.5">
+        {boulevards.map((item) => (
+          <div
+            key={item.num}
+            className="h-full bg-white/95 backdrop-blur-md rounded-2xl p-3.5 px-5 border-2 border-sky-200/90 shadow-[0_4px_16px_rgba(2,132,199,0.06)] flex flex-col justify-start gap-2.5"
+          >
+
+            {/* Top Area: Number & Street Name */}
+            <div className="flex items-center gap-3">
+              <span className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-sky-600 text-white font-mono font-black text-2xl shadow-sm">
+                {item.num}
+              </span>
+
+              <h2 className="text-[32px] font-black text-slate-950 leading-tight tracking-tight truncate">
+                {item.name}
+              </h2>
+            </div>
+
+            {/* Tag */}
+            <div>
+              <span
+                className={\`inline-block text-base font-semibold px-2.5 py-1 rounded-md border \${item.badgeColor}\`}
+              >
+                {item.tag}
+              </span>
+            </div>
+
+            {/* Landmark Badges */}
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200">
+              {item.landmarks.map((landmark, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-1.5 text-[20px] font-normal leading-tight px-2.5 py-1.5 rounded-lg bg-slate-50 text-slate-800 border border-slate-200 min-w-0"
+                >
+                  <span className="text-rose-500 text-base shrink-0">
+                    📍
+                  </span>
+
+                  <span className="truncate">
+                    {landmark}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </main>
+
+      {/* Student Survival Tips Footer */}
+      <footer className="relative z-10 shrink-0 bg-white backdrop-blur-md rounded-2xl border-2 border-sky-300 p-3.5 px-6 flex items-center justify-between shadow-sm">
+
+        <div className="flex items-center gap-4">
+
+          {/* Footer Icon */}
+          <div className="w-12 h-12 rounded-xl bg-sky-500 text-white flex items-center justify-center font-black text-3xl shadow-sm">
+            💡
+          </div>
+
+          <div>
+            {/* Footer Heading */}
+            <p className="text-lg font-bold text-sky-900 uppercase tracking-wide">
+              គន្លឹះចាំផ្លូវងាយៗនៅភ្នំពេញ
+            </p>
+
+            {/* Footer Main Text */}
+            <p className="text-[22px] font-normal text-slate-800 leading-snug">
+              • ផ្លូវលេខ{" "}
+              <span className="text-sky-700 font-bold underline underline-offset-4">
+                សេស
+              </span>{" "}
+              (កើត ⇄ លិច) | ផ្លូវលេខ{" "}
+              <span className="text-sky-700 font-bold underline underline-offset-4">
+                គូ
+              </span>{" "}
+              (ជើង ⇄ ត្បូង)
+            </p>
+          </div>
+        </div>
+
+        {/* Google Maps Button */}
+        <div className="flex items-center gap-2 bg-sky-50 px-5 py-2.5 rounded-xl border-2 border-sky-300 text-xl font-bold text-sky-950">
+          <span className="text-2xl">🛵</span>
+          <span>បើក Google Maps</span>
+        </div>
+
+      </footer>
+    </div>
+  );
+}
+`,
+  },
+  {
     id: "minimal-event",
     name: "Minimal Event Poster",
     category: "Minimal",
