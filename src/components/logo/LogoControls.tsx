@@ -41,7 +41,7 @@ export async function requestLogoUpload(): Promise<void> {
 
 const OPEN_LOGO_EVENT = "poster-studio:open-logo";
 
-/** Opens the logo popover (header overflow / external). */
+/** Opens the logo popover (command palette / external). */
 export function requestLogoPanel(): void {
   if (typeof window === "undefined") return;
   // Defer so dropdown menus can close before the popover opens.
@@ -50,12 +50,7 @@ export function requestLogoPanel(): void {
   }, 0);
 }
 
-interface LogoControlsProps {
-  /** When false, trigger is visually hidden but stays mounted for event-driven open. */
-  visible?: boolean;
-}
-
-export function LogoControls({ visible = true }: LogoControlsProps) {
+export function LogoControls() {
   const code = useEditorStore((s) => s.code);
   const current = useProjectStore((s) => s.current);
   const setLogo = useProjectStore((s) => s.setLogo);
@@ -83,6 +78,20 @@ export function LogoControls({ visible = true }: LogoControlsProps) {
       window.removeEventListener(OPEN_LOGO_EVENT, onOpen);
     };
   }, []);
+
+  // Iframe clicks never reach the parent document, so Radix cannot dismiss on
+  // "outside" pointerdown over the poster. Disable iframe hit-testing while
+  // open so the click lands on the preview chrome instead.
+  useEffect(() => {
+    if (!open) return;
+    const iframe = document.querySelector<HTMLIFrameElement>(".studio-preview-panel iframe");
+    if (!iframe) return;
+    const previous = iframe.style.pointerEvents;
+    iframe.style.pointerEvents = "none";
+    return () => {
+      iframe.style.pointerEvents = previous;
+    };
+  }, [open]);
 
   const openFilePicker = async () => {
     if ((await requireSignedInForAction()) === false) return;
@@ -116,17 +125,12 @@ export function LogoControls({ visible = true }: LogoControlsProps) {
             type="button"
             variant="ghost"
             size="sm"
-            className={cn(
-              "h-7 gap-1.5 px-2 text-xs",
-              !visible && "pointer-events-none absolute h-0 w-0 overflow-hidden opacity-0",
-            )}
+            className="h-7 gap-1.5 px-2 text-xs"
             disabled={!current}
-            tabIndex={visible ? undefined : -1}
-            aria-hidden={!visible}
             aria-label="Logo"
           >
             <ImageIcon className="h-3.5 w-3.5" />
-            <span className="hidden lg:inline">Logo</span>
+            <span>Logo</span>
           </Button>
         </PopoverTrigger>
       </WithTooltip>

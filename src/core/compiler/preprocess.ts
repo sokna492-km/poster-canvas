@@ -14,13 +14,87 @@ function lineOf(source: string, index: number): number {
   return source.slice(0, index).split("\n").length;
 }
 
+/** True when the buffer looks like TSX/JS poster code rather than raw math. */
+export function looksLikePosterProgram(source: string): boolean {
+  const s = source.trim();
+  if (!s) return false;
+  if (/^\s*import\s+/m.test(s)) return true;
+  if (/\bexport\s+default\b/.test(s)) return true;
+  if (/\bfunction\s+Poster\b/.test(s)) return true;
+  if (/<\s*Poster[\s/>]/.test(s)) return true;
+  if (/\b(const|let|var)\s+[A-Za-z_$][\w$]*\s*=/.test(s)) return true;
+  if (/\bfunction\s+[A-Za-z_$][\w$]*\s*\(/.test(s)) return true;
+  if (/\breturn\s*[\(<]/.test(s)) return true;
+  if (/<[A-Za-z][\w.]*[\s/>]/.test(s) && /<\/[A-Za-z]/.test(s)) return true;
+  return false;
+}
+
+/** Non-program buffer that we can auto-wrap as KaTeX. */
+export function isMathOnlyInput(source: string): boolean {
+  const s = source.trim();
+  if (!s) return false;
+  if (looksLikePosterProgram(s)) return false;
+  return true;
+}
+
+function hasMathDelimiters(source: string): boolean {
+  return /\$|\\\(|\\\[/.test(source);
+}
+
+/**
+ * Build a sandbox-ready poster that renders raw TeX / delimited math.
+ * Emits React.createElement so we do not need a second JSX pass for the wrapper.
+ */
+export function wrapMathOnlyPoster(mathSource: string): string {
+  const payload = JSON.stringify(mathSource);
+  const posterProps = `{ className: "box-border flex h-full w-full items-center justify-center bg-white p-24 text-slate-900" }`;
+
+  // Do not name this function Poster — a named function expression would
+  // shadow PosterCore.Poster and recurse until the preview hangs.
+  if (hasMathDelimiters(mathSource)) {
+    return [
+      `const __default = function MathOnlyPoster() {`,
+      `  return React.createElement(`,
+      `    PosterCore.Poster,`,
+      `    ${posterProps},`,
+      `    React.createElement(PosterCore.Text, { size: 64, align: "center" }, ${payload})`,
+      `  );`,
+      `};`,
+    ].join("\n");
+  }
+
+  return [
+    `const __default = function MathOnlyPoster() {`,
+    `  return React.createElement(`,
+    `    PosterCore.Poster,`,
+    `    ${posterProps},`,
+    `    React.createElement(PosterCore.BlockMath, { tex: ${payload}, size: 72 })`,
+    `  );`,
+    `};`,
+  ].join("\n");
+}
+
 /**
  * Rewrites user source into a self-contained script body that the sandbox can
  * safely compile and execute. No user code is evaluated here — this is pure
  * string transformation, so it is cheap and testable.
+ *
+ * Also supports math-only mode: if the buffer is plain TeX / `$...$` (no poster
+ * component), it is auto-wrapped into a minimal KaTeX poster.
  */
 export function preprocess(source: string): PreprocessResult {
   const diagnostics: Diagnostic[] = [];
+  const trimmed = source.trim();
+
+  if (trimmed && isMathOnlyInput(trimmed)) {
+    diagnostics.push({
+      severity: "warning",
+      kind: "preprocess",
+      message:
+        "Math-only input detected — wrapped into a poster automatically. For full layouts, use `export default function Poster() { ... }`.",
+    });
+    return { code: wrapMathOnlyPoster(trimmed), diagnostics };
+  }
 
   let code = source.replace(BARE_IMPORT_RE, (match, module: string) => {
     if (module.endsWith(".css")) return "";
@@ -64,7 +138,7 @@ export function preprocess(source: string): PreprocessResult {
       severity: "error",
       kind: "preprocess",
       message:
-        "No poster component found. Add `export default function Poster() { ... }` to your code.",
+        "No poster component found. Add `export default function Poster() { ... }` to your code, or type plain LaTeX / `$x^2$` for math-only mode.",
     });
   }
 

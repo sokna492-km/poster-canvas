@@ -77,7 +77,7 @@ export function PreviewCanvas({ iframeRef }: PreviewCanvasProps) {
         }}
       >
         <div
-          className="relative shadow-2xl"
+          className="relative overflow-hidden shadow-2xl"
           style={{
             width: scaledW,
             height: scaledH,
@@ -86,7 +86,7 @@ export function PreviewCanvas({ iframeRef }: PreviewCanvasProps) {
           <iframe
             key={reloadNonce}
             ref={iframeRef}
-            src={publicUrl("sandbox/index.html")}
+            src={`${publicUrl("sandbox/index.html")}?v=katex-0.18.4`}
             title="Poster preview"
             sandbox="allow-scripts allow-same-origin"
             className="absolute left-0 top-0 origin-top-left border-0"

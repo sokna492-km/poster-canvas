@@ -19,6 +19,7 @@ export function useKeyboardShortcuts(): void {
 
       if (key === "enter") {
         event.preventDefault();
+        event.stopPropagation();
         useEditorStore.getState().run();
         return;
       }
@@ -29,7 +30,9 @@ export function useKeyboardShortcuts(): void {
       }
     };
 
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    // Capture: Monaco handles Ctrl/Cmd+Enter internally (insert line) and never
+    // lets the event bubble to window.
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
   }, []);
 }

@@ -17,6 +17,46 @@ const reactRoot = createRoot(rootEl);
 let currentAssets = {};
 let currentLogoSlot = null;
 
+function vendorUrl(path) {
+  return new URL(path, import.meta.url).href;
+}
+
+function loadStylesheet(href) {
+  if ([...document.querySelectorAll("link[rel='stylesheet']")].some((l) => l.href === href)) {
+    return;
+  }
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  document.head.appendChild(link);
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if ([...document.scripts].some((s) => s.src === src)) {
+      resolve();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+/** Ensure KaTeX + mhchem exist even if a cached index.html omitted the script tags. */
+async function ensureKatex() {
+  loadStylesheet(vendorUrl("./vendor/katex/katex.min.css"));
+  if (typeof globalThis.katex?.renderToString !== "function") {
+    await loadScript(vendorUrl("./vendor/katex/katex.min.js"));
+  }
+  if (!globalThis.__posterMhchemLoaded) {
+    await loadScript(vendorUrl("./vendor/katex/mhchem.min.js"));
+    globalThis.__posterMhchemLoaded = true;
+  }
+}
+
 function send(message) {
   parent.postMessage({ source: "poster-sandbox", ...message }, "*");
 }
@@ -72,7 +112,7 @@ function clearPreview() {
   reactRoot.render(null);
 }
 
-function render(payload) {
+async function render(payload) {
   setSize(payload.width, payload.height);
   currentAssets = payload.assets && typeof payload.assets === "object" ? payload.assets : {};
   currentLogoSlot = payload.logoSlot ?? null;
@@ -121,6 +161,13 @@ function render(payload) {
         ),
       ),
     );
+    // Wait for KaTeX (and Google) webfonts so preview/export aren't missing glyphs.
+    if (document.fonts?.ready) {
+      await Promise.race([
+        document.fonts.ready,
+        new Promise((resolve) => setTimeout(resolve, 3000)),
+      ]);
+    }
     send({ type: "rendered" });
   } catch (error) {
     clearPreview();
@@ -179,6 +226,9 @@ function isRasterExportFormat(format) {
 }
 
 async function captureExport(lib, format, scale) {
+  if (document.fonts?.ready) {
+    await document.fonts.ready;
+  }
   const options = {
     pixelRatio: scale,
     width: rootEl.offsetWidth,
@@ -280,7 +330,7 @@ async function runExport(payload) {
 window.addEventListener("message", (event) => {
   const payload = event.data;
   if (!payload || payload.target !== "poster-sandbox") return;
-  if (payload.type === "render") render(payload);
+  if (payload.type === "render") void render(payload);
   if (payload.type === "clear") clearPreview();
   if (payload.type === "export") void runExport(payload);
 });
@@ -295,4 +345,10 @@ window.addEventListener("unhandledrejection", (event) => {
   send({ type: "runtime-error", diagnostic: toDiagnostic(event.reason, "runtime") });
 });
 
-send({ type: "sandbox-ready" });
+void ensureKatex()
+  .catch((error) => {
+    console.error("KaTeX failed to load", error);
+  })
+  .finally(() => {
+    send({ type: "sandbox-ready" });
+  });

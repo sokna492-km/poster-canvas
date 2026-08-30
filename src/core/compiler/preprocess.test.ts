@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { preprocess } from "./preprocess";
+import { isMathOnlyInput, preprocess, wrapMathOnlyPoster } from "./preprocess";
 
 describe("preprocess", () => {
   it("strips react imports and rewrites export default", () => {
@@ -22,6 +22,16 @@ export default function Poster() {
     expect(code).toContain("const { Poster, Text } = PosterCore");
   });
 
+  it("rewrites Math import from @poster/core", () => {
+    const source = `import { Math, BlockMath } from "@poster/core";
+export default function Poster() {
+  return <Math tex="x^2" />;
+}`;
+    const { code, diagnostics } = preprocess(source);
+    expect(code).toContain("const { Math, BlockMath } = PosterCore");
+    expect(diagnostics.filter((d) => d.severity === "error")).toHaveLength(0);
+  });
+
   it("warns on unsupported imports", () => {
     const source = `import foo from "lodash";
 export default function Poster() { return null; }`;
@@ -29,8 +39,55 @@ export default function Poster() { return null; }`;
     expect(diagnostics.some((d) => d.kind === "preprocess" && d.severity === "warning")).toBe(true);
   });
 
-  it("errors when no poster component is found", () => {
+  it("errors when no poster component is found for JS snippets", () => {
     const { diagnostics } = preprocess("const x = 1;");
     expect(diagnostics.some((d) => d.severity === "error")).toBe(true);
+  });
+
+  it("auto-wraps bare TeX like x^2 into BlockMath poster", () => {
+    const { code, diagnostics } = preprocess("x^2");
+    expect(diagnostics.filter((d) => d.severity === "error")).toHaveLength(0);
+    expect(diagnostics.some((d) => d.severity === "warning" && /Math-only/.test(d.message))).toBe(
+      true,
+    );
+    expect(code).toContain("PosterCore.BlockMath");
+    expect(code).toContain('"x^2"');
+    expect(code).toContain("MathOnlyPoster");
+    expect(code).not.toContain("function Poster(");
+  });
+
+  it("auto-wraps delimited math into Text poster", () => {
+    const { code, diagnostics } = preprocess("Solve $x^2$ today");
+    expect(diagnostics.filter((d) => d.severity === "error")).toHaveLength(0);
+    expect(code).toContain("PosterCore.Text");
+    expect(code).toContain("Solve $x^2$ today");
+    expect(code).not.toContain("BlockMath");
+  });
+
+  it("auto-wraps LaTeX commands without delimiters", () => {
+    const { code } = preprocess(String.raw`\frac{a}{b}`);
+    expect(code).toContain("PosterCore.BlockMath");
+    expect(code).toContain(String.raw`\frac{a}{b}`);
+  });
+
+  it("does not treat a full Poster as math-only", () => {
+    expect(
+      isMathOnlyInput(`export default function Poster() {
+  return <div>Hi</div>;
+}`),
+    ).toBe(false);
+    const { code } = preprocess(`export default function Poster() {
+  return <div>Hi</div>;
+}`);
+    expect(code).toContain("const __default = function Poster");
+    expect(code).not.toContain("BlockMath");
+  });
+});
+
+describe("wrapMathOnlyPoster", () => {
+  it("uses BlockMath for bare tex and Text when delimiters exist", () => {
+    expect(wrapMathOnlyPoster("a^2+b^2")).toContain("PosterCore.BlockMath");
+    expect(wrapMathOnlyPoster("$a^2$")).toContain("PosterCore.Text");
+    expect(wrapMathOnlyPoster("a^2")).not.toMatch(/function Poster\s*\(/);
   });
 });

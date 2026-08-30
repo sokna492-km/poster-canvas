@@ -3,10 +3,121 @@
  * Runs inside the sandboxed preview iframe only.
  */
 import React from "https://esm.sh/react@18.3.1";
+import { splitMathSegments } from "./splitMathSegments.js";
 
 const h = React.createElement;
 
 const px = (v) => (typeof v === "number" ? `${v}px` : v);
+
+function getKatex() {
+  return typeof globalThis !== "undefined" ? globalThis.katex : undefined;
+}
+
+function resolveTexSource(tex, children) {
+  if (typeof tex === "string") return tex;
+  if (typeof children === "string") return children;
+  if (Array.isArray(children) && children.every((c) => typeof c === "string")) {
+    return children.join("");
+  }
+  return "";
+}
+
+/**
+ * Render TeX/KaTeX to HTML. Prefer `<Math tex="..." />` or `$...$` inside `<Text>`.
+ * Aliases: Latex, KaTeX.
+ */
+export function Math({
+  tex,
+  children,
+  display = false,
+  macros,
+  color,
+  size,
+  className = "",
+  style = {},
+  throwOnError = false,
+}) {
+  const expr = resolveTexSource(tex, children);
+  const katex = getKatex();
+  const tag = display ? "div" : "span";
+  const baseStyle = {
+    color,
+    display: display ? "block" : "inline-block",
+    ...(size != null ? { fontSize: px(size) } : {}),
+    ...style,
+  };
+
+  if (!katex || typeof katex.renderToString !== "function") {
+    return h(
+      tag,
+      { className, style: { ...baseStyle, color: color ?? "#b91c1c", fontFamily: "monospace" } },
+      expr || "[KaTeX unavailable]",
+    );
+  }
+
+  try {
+    const html = katex.renderToString(expr, {
+      displayMode: Boolean(display),
+      throwOnError: Boolean(throwOnError),
+      output: "html",
+      colorIsTextColor: true,
+      trust: false,
+      minRuleThickness: 0.05,
+      macros: macros && typeof macros === "object" ? macros : undefined,
+    });
+    return h(tag, {
+      className,
+      style: baseStyle,
+      dangerouslySetInnerHTML: { __html: html },
+    });
+  } catch (error) {
+    return h(
+      tag,
+      {
+        className,
+        style: { ...baseStyle, color: "#b91c1c", fontFamily: "monospace", whiteSpace: "pre-wrap" },
+        title: String(error?.message ?? error),
+      },
+      expr,
+    );
+  }
+}
+
+/** Display-mode math (block). Equivalent to `<Math display size={48} />`. */
+export function BlockMath({ size = 48, ...props }) {
+  return h(Math, { ...props, size, display: true });
+}
+
+export const Latex = Math;
+export const KaTeX = Math;
+
+function renderTextWithMath(children) {
+  if (typeof children === "string") {
+    const segments = splitMathSegments(children);
+    if (segments.length === 1 && segments[0].type === "text") {
+      return segments[0].value;
+    }
+    return segments.map((seg, i) => {
+      if (seg.type === "text") return seg.value;
+      return h(Math, { key: i, tex: seg.value, display: seg.display });
+    });
+  }
+
+  if (Array.isArray(children)) {
+    return children.map((child, i) => {
+      if (typeof child === "string") {
+        const rendered = renderTextWithMath(child);
+        if (Array.isArray(rendered)) {
+          return h(React.Fragment, { key: i }, ...rendered);
+        }
+        return rendered;
+      }
+      return child;
+    });
+  }
+
+  return children;
+}
 
 export function Poster({
   children,
@@ -52,7 +163,7 @@ export function Text({
         ...style,
       },
     },
-    children,
+    renderTextWithMath(children),
   );
 }
 

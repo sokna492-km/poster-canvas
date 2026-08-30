@@ -41,7 +41,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: "run",
     title: "Run and revise",
-    body: "Click Run (or press Cmd/Ctrl+Enter) to update the preview. Edits do not auto-run — revise the JSX, then Run again to see the result.",
+    body: "Click Run in the preview toolbar (or press Cmd/Ctrl+Enter) to update the preview. Edits do not auto-run — revise the JSX, then Run again to see the result.",
   },
   {
     id: "polish",

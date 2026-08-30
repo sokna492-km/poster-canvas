@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { ExportFormat } from "@/core/types";
 import { requestLogoUpload } from "@/components/logo/LogoControls";
+import { modEnterShortcut, modSShortcut } from "@/lib/modKey";
 import { useEditorStore } from "@/stores/editorStore";
 import { usePreviewStore } from "@/stores/previewStore";
 import { useProjectStore } from "@/stores/projectStore";
@@ -40,7 +41,7 @@ export function usePosterCommands(onExport?: (format: ExportFormat) => void): Po
         id: "save-project",
         label: "Save Project",
         group: "Project",
-        shortcut: "⌘S",
+        shortcut: modSShortcut(),
         run: () => {
           setCommandPaletteOpen(false);
           void useProjectStore.getState().saveProject();
@@ -59,7 +60,7 @@ export function usePosterCommands(onExport?: (format: ExportFormat) => void): Po
         id: "run",
         label: "Run",
         group: "Editor",
-        shortcut: "⌘↵",
+        shortcut: modEnterShortcut(),
         run: () => {
           setCommandPaletteOpen(false);
           run();

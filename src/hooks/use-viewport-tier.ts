@@ -4,6 +4,8 @@ import { useSyncExternalStore } from "react";
 export const VIEWPORT_MD = 768;
 /** Tailwind `lg` */
 export const VIEWPORT_LG = 1024;
+/** Tailwind `xl` — full labeled header chrome fits from here. */
+export const VIEWPORT_XL = 1280;
 
 export type ViewportTier = "small" | "medium" | "large";
 
@@ -39,6 +41,22 @@ function subscribe(onStoreChange: () => void): () => void {
 /** Hydration-safe viewport tier: small &lt;768, medium 768–1023, large ≥1024. */
 export function useViewportTier(): ViewportTier {
   return useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
+}
+
+/**
+ * Hydration-safe `min-width` match. SSR defaults to `false` so chrome that
+ * collapses on narrow viewports does not flash clipped controls.
+ */
+export function useMinWidth(minWidth: number): boolean {
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      const mq = window.matchMedia(`(min-width: ${minWidth}px)`);
+      mq.addEventListener("change", onStoreChange);
+      return () => mq.removeEventListener("change", onStoreChange);
+    },
+    () => window.matchMedia(`(min-width: ${minWidth}px)`).matches,
+    () => false,
+  );
 }
 
 /** @deprecated Prefer useViewportTier — kept for any residual imports. */

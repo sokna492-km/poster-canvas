@@ -160,6 +160,70 @@ export const STARTER_CODE = `export default function Poster() {
 
 export const TEMPLATES: PosterTemplate[] = [
   {
+    id: "katex-math-lab",
+    name: "KaTeX Math Lab",
+    category: "Education",
+    description: "Showcase inline/display math, matrices, aligned equations, and chemistry.",
+    width: 1080,
+    height: 1350,
+    code: `import { Poster, Text, Math, BlockMath, Stack } from "@poster/core";
+
+export default function App() {
+  return (
+    <Poster background="#0f172a" color="#e2e8f0" className="p-16 box-border">
+      <Stack gap={28} className="h-full justify-between">
+        <div>
+          <Text size={28} color="#38bdf8" className="tracking-[0.2em] uppercase">
+            Poster Studio · KaTeX
+          </Text>
+          <Text size={72} weight={700} className="mt-4">
+            Math that renders
+          </Text>
+          <Text size={36} color="#94a3b8" className="mt-3">
+            {"Inline in Text: $e^{i\\\\pi}+1=0$ · also \\\\(\\\\frac{a}{b}\\\\)"}
+          </Text>
+        </div>
+
+        <div className="rounded-3xl bg-slate-900/80 border border-slate-700 p-10">
+          <Text size={32} weight={600} className="mb-6 text-sky-300">
+            Display and matrix
+          </Text>
+          <BlockMath
+            color="#f8fafc"
+            tex={String.raw\`\\sum_{n=1}^{N} n = \\frac{N(N+1)}{2}\`}
+          />
+          <div className="mt-8">
+            <BlockMath
+              color="#f8fafc"
+              tex={String.raw\`\\begin{pmatrix}a & b \\\\ c & d\\end{pmatrix}\`}
+            />
+          </div>
+        </div>
+
+        <div className="rounded-3xl bg-slate-900/80 border border-slate-700 p-10">
+          <Text size={32} weight={600} className="mb-6 text-emerald-300">
+            Aligned and chemistry
+          </Text>
+          <BlockMath
+            color="#f8fafc"
+            tex={String.raw\`\\begin{aligned} a &= b + c \\\\ x^2 &= \\sqrt{y} \\end{aligned}\`}
+          />
+          <div className="mt-8 flex items-center gap-4">
+            <Text size={36}>Reaction:</Text>
+            <Math tex={String.raw\`\\ce{CO2 + H2O}\`} color="#f8fafc" />
+          </div>
+        </div>
+
+        <Text size={28} color="#64748b">
+          Prefer {"<Math />"} / {"<BlockMath />"} or $…$ inside {"<Text>"}. Lone $50 stays text.
+        </Text>
+      </Stack>
+    </Poster>
+  );
+}
+`,
+  },
+  {
     id: "phnom-penh-boulevards",
     name: "Phnom Penh Boulevards",
     category: "Education",

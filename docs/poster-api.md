@@ -18,18 +18,80 @@ import { Poster, Box, Text, Stack, Grid } from "@poster/core";
 
 ## Typography & media
 
-| Component | Description                             |
-| --------- | --------------------------------------- |
-| `Text`    | Styled text (`size`, `weight`, `color`) |
-| `Image`   | `<img>` with object-fit helpers         |
-| `Logo`    | Brand mark from the project logo asset  |
-| `Icon`    | Lucide-style icon placeholder           |
-| `Badge`   | Small label chip                        |
-| `Button`  | Styled button                           |
+| Component   | Description                                          |
+| ----------- | ---------------------------------------------------- |
+| `Text`      | Styled text (`size`, `weight`, `color`); auto-renders `$…$` / `$$…$$` / `\(...\)` / `\[…\]` |
+| `Math`      | Inline KaTeX (`tex`, or string `children`; optional `size`) |
+| `BlockMath` | Display (block) KaTeX (default `size={48}`)              |
+| `Image`     | `<img>` with object-fit helpers                      |
+| `Logo`      | Brand mark from the project logo asset               |
+| `Icon`      | Lucide-style icon placeholder                        |
+| `Badge`     | Small label chip                                     |
+| `Button`    | Styled button                                        |
+
+`Latex` and `KaTeX` are aliases of `Math`.
+
+### Math (KaTeX)
+
+The sandbox vendors [KaTeX](https://katex.org/) (plus mhchem).
+
+#### Math-only mode (just type LaTeX)
+
+You do **not** need a React poster for simple equations. Put TeX in the editor and click **Run**:
+
+```text
+x^2
+```
+
+```text
+$e^{i\pi}+1=0$
+```
+
+```text
+\frac{a}{b}
+```
+
+```text
+Solve $x^2 + 1 = 0$ on the quiz
+```
+
+- Bare TeX (no `$`) → centered display math
+- Text with `$…$` / `$$…$$` / `\(...\)` / `\[…\]` → mixed prose + math
+- Full TSX posters still work as before (`export default function Poster() { … }`)
+
+#### Full poster mode
+
+Prefer explicit components for layouts:
+
+```tsx
+import { Poster, Text, Math, BlockMath } from "@poster/core";
+
+export default function App() {
+  return (
+    <Poster className="p-24 bg-white text-slate-900">
+      <Text size={48}>
+        Inline via Text: $E = mc^2$ and \(\frac{a}{b}\)
+      </Text>
+      <Math tex="e^{i\pi}+1=0" />
+      <BlockMath tex={String.raw`\sum_{n=1}^{N} n = \frac{N(N+1)}{2}`} />
+      <BlockMath tex={String.raw`\begin{pmatrix}a&b\\c&d\end{pmatrix}`} />
+      <Math tex={String.raw`\ce{CO2 + H2O}`} />
+    </Poster>
+  );
+}
+```
+
+Prefer `String.raw` template literals (or carefully doubled `\\` in normal strings) so TeX backslashes survive JavaScript string parsing.
+
+**Delimiters** (auto-parsed inside string children of `Text`): `$…$`, `$$…$$`, `\\(…\\)`, `\\[…\\]`. A lone `$` without a closer (e.g. `$50`) stays plain text. Escape a literal dollar with `\\$`.
+
+**Props:** `tex`, `display`, `macros`, `color`, `className`, `style`, `throwOnError` (default `false` — shows red source instead of crashing).
+
+**Limits:** KaTeX covers common math (see [supported functions](https://katex.org/docs/supported.html)), not full LaTeX documents, TikZ, or arbitrary `\usepackage`. Chemistry uses `\ce{…}` via mhchem.
 
 ### Brand logo
 
-Upload a logo from the header **Logo** control. By default the sandbox overlays it in a corner (`logoSlot`: TL / TR / BL / BR + max height).
+Upload a logo from the preview toolbar **Logo** control. By default the sandbox overlays it in a corner (`logoSlot`: TL / TR / BL / BR + max height).
 
 For in-layout placement, import `Logo` (or use `assets.logo`):
 

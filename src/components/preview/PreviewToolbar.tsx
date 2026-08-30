@@ -1,9 +1,13 @@
-import { Grid3x3, Minus, Plus, RefreshCw, RotateCcw } from "lucide-react";
+import { Grid3x3, Minus, Play, Plus, RefreshCw, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WithTooltip } from "@/components/ui/tooltip";
+import { LogoControls } from "@/components/logo/LogoControls";
+import { modEnterShortcut } from "@/lib/modKey";
+import { useEditorStore } from "@/stores/editorStore";
 import { usePreviewStore } from "@/stores/previewStore";
 
 export function PreviewToolbar() {
+  const run = useEditorStore((s) => s.run);
   const zoomBy = usePreviewStore((s) => s.zoomBy);
   const fitMode = usePreviewStore((s) => s.fitMode);
   const setFitMode = usePreviewStore((s) => s.setFitMode);
@@ -13,11 +17,30 @@ export function PreviewToolbar() {
   const reloadSandbox = usePreviewStore((s) => s.reloadSandbox);
   const showGrid = usePreviewStore((s) => s.showGrid);
   const zoom = usePreviewStore((s) => s.zoom);
+  const previewStale = usePreviewStore((s) => s.previewStale);
 
   const zoomLabel = fitMode ? "Fit" : `${Math.round(zoom * 100)}%`;
+  const runShortcut = modEnterShortcut();
+  const runTip = previewStale
+    ? `Run (preview out of date) · ${runShortcut}`
+    : `Run · ${runShortcut}`;
 
   return (
     <div className="flex h-9 min-w-0 shrink-0 items-center gap-1 overflow-x-auto border-b border-border bg-[var(--toolbar-bg)] px-2">
+      <WithTooltip label={runTip}>
+        <Button
+          type="button"
+          variant={previewStale ? "secondary" : "ghost"}
+          size="sm"
+          className="h-7 gap-1.5 px-2 text-xs"
+          aria-label="Run"
+          onClick={run}
+        >
+          <Play className="h-3.5 w-3.5" />
+          <span>Run</span>
+        </Button>
+      </WithTooltip>
+      <div className="mx-1 h-4 w-px shrink-0 bg-border" aria-hidden="true" />
       <ToolbarButton label="Zoom out" onClick={() => zoomBy(0.9)}>
         <Minus className="h-3.5 w-3.5" />
       </ToolbarButton>
@@ -42,6 +65,8 @@ export function PreviewToolbar() {
       <ToolbarButton label="Reload preview" onClick={reloadSandbox}>
         <RefreshCw className="h-3.5 w-3.5" />
       </ToolbarButton>
+      <div className="mx-1 h-4 w-px shrink-0 bg-border" aria-hidden="true" />
+      <LogoControls />
     </div>
   );
 }

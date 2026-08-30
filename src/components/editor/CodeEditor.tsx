@@ -98,6 +98,14 @@ export function CodeEditor({ className }: CodeEditorProps) {
               tabSize: 2,
               automaticLayout: true,
             });
+            editor.addAction({
+              id: "poster.run",
+              label: "Run poster",
+              keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+              run: () => {
+                useEditorStore.getState().run();
+              },
+            });
           }}
           options={{
             padding: { top: 12 },
@@ -111,7 +119,7 @@ export function CodeEditor({ className }: CodeEditorProps) {
             type="button"
             variant="secondary"
             size="icon"
-            className="pointer-events-auto h-8 w-8 shadow-md"
+            className="pointer-events-auto h-8 w-8 shadow-md transition-transform duration-200 ease-out hover:scale-110 hover:shadow-lg active:scale-95"
             aria-label="Copy AI prompt"
             onClick={() => void copyAiPrompt()}
           >

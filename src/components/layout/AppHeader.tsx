@@ -4,11 +4,9 @@ import {
   Download,
   FolderOpen,
   Home,
-  ImageIcon,
   LayoutTemplate,
   Moon,
   MoreHorizontal,
-  Play,
   Plus,
   Ruler,
   Save,
@@ -25,13 +23,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { WithTooltip } from "@/components/ui/tooltip";
 import { ExportMenu } from "@/components/export/ExportMenu";
-import { LogoControls, requestLogoPanel } from "@/components/logo/LogoControls";
 import { krumathHomeUrl } from "@/lib/krumathUrls";
 import { publicUrl } from "@/lib/publicUrl";
-import { useViewportTier } from "@/hooks/use-viewport-tier";
+import { useMinWidth, useViewportTier, VIEWPORT_XL } from "@/hooks/use-viewport-tier";
 import { useEditorStore } from "@/stores/editorStore";
 import { useProjectStore } from "@/stores/projectStore";
-import { usePreviewStore } from "@/stores/previewStore";
 import { useUiStore } from "@/stores/uiStore";
 import { cn } from "@/lib/utils";
 import type { SandboxBridge } from "@/core/renderer";
@@ -42,9 +38,11 @@ interface AppHeaderProps {
 
 export function AppHeader({ bridge }: AppHeaderProps) {
   const tier = useViewportTier();
-  const compact = tier !== "large";
+  // Full labeled toolbar needs ~xl width; below that collapse into ⋯ More
+  // so Theme/Home are never clipped off the right edge.
+  const wideChrome = useMinWidth(VIEWPORT_XL);
+  const compact = !wideChrome;
   const dirty = useEditorStore((s) => s.dirty);
-  const run = useEditorStore((s) => s.run);
   const current = useProjectStore((s) => s.current);
   const renameProject = useProjectStore((s) => s.renameProject);
   const saveProject = useProjectStore((s) => s.saveProject);
@@ -55,7 +53,6 @@ export function AppHeader({ bridge }: AppHeaderProps) {
   const setTemplatesOpen = useUiStore((s) => s.setTemplatesOpen);
   const setSizePickerOpen = useUiStore((s) => s.setSizePickerOpen);
   const setOnboardingOpen = useUiStore((s) => s.setOnboardingOpen);
-  const previewStale = usePreviewStore((s) => s.previewStale);
   const [name, setName] = useState(current?.name ?? "Untitled Poster");
   const renameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -71,14 +68,12 @@ export function AppHeader({ bridge }: AppHeaderProps) {
     }, 500);
   };
 
-  const runTip = previewStale ? "Run (preview out of date)" : "Run";
-
   return (
     <header className="flex h-10 shrink-0 items-center gap-2 border-b border-border bg-[var(--toolbar-bg)] px-3">
       <div className="inline-flex h-7 shrink-0 items-center gap-1.5 px-2 text-xs font-semibold tracking-wide text-muted-foreground">
         <img src={publicUrl("favicon.svg")} alt="" className="h-5 w-5" aria-hidden="true" />
-        <span className="lg:hidden">KP Studio</span>
-        <span className="hidden lg:inline">KruMath Poster Studio</span>
+        <span className="xl:hidden">KP Studio</span>
+        <span className="hidden xl:inline">KruMath Poster Studio</span>
       </div>
       <div className="mx-1 hidden h-4 w-px bg-border sm:block" />
       <Input
@@ -103,14 +98,6 @@ export function AppHeader({ bridge }: AppHeaderProps) {
             <HeaderButton label="Save" onClick={() => void saveProject()}>
               <Save className="h-3.5 w-3.5" />
             </HeaderButton>
-            <HeaderButton
-              label="Run"
-              tip={runTip}
-              onClick={run}
-              variant={previewStale ? "secondary" : "ghost"}
-            >
-              <Play className="h-3.5 w-3.5" />
-            </HeaderButton>
             <ExportMenu bridge={bridge}>
               <HeaderButton label="Export" withTooltip={false}>
                 <Download className="h-3.5 w-3.5" />
@@ -121,12 +108,10 @@ export function AppHeader({ bridge }: AppHeaderProps) {
               onNew={() => void newProject()}
               onOpen={() => setProjectsOpen(true)}
               onTemplates={() => setTemplatesOpen(true)}
-              onLogo={requestLogoPanel}
               onSize={() => setSizePickerOpen(true)}
               onHelp={() => setOnboardingOpen(true)}
               onTheme={toggleTheme}
             />
-            <LogoControls visible={false} />
             <KruMathHomeButton />
           </>
         ) : (
@@ -140,14 +125,6 @@ export function AppHeader({ bridge }: AppHeaderProps) {
             <HeaderButton label="Save" onClick={() => void saveProject()}>
               <Save className="h-3.5 w-3.5" />
             </HeaderButton>
-            <HeaderButton
-              label="Run"
-              tip={runTip}
-              onClick={run}
-              variant={previewStale ? "secondary" : "ghost"}
-            >
-              <Play className="h-3.5 w-3.5" />
-            </HeaderButton>
             <ExportMenu bridge={bridge}>
               <HeaderButton label="Export" withTooltip={false}>
                 <Download className="h-3.5 w-3.5" />
@@ -156,7 +133,6 @@ export function AppHeader({ bridge }: AppHeaderProps) {
             <HeaderButton label="Templates" onClick={() => setTemplatesOpen(true)}>
               <LayoutTemplate className="h-3.5 w-3.5" />
             </HeaderButton>
-            <LogoControls />
             <HeaderButton label="Size" onClick={() => setSizePickerOpen(true)}>
               <Ruler className="h-3.5 w-3.5" />
             </HeaderButton>
@@ -188,7 +164,7 @@ function KruMathHomeButton() {
       >
         <a href={krumathHomeUrl()}>
           <Home className="h-3.5 w-3.5" />
-          <span className="hidden lg:inline">Home</span>
+          <span className="hidden xl:inline">Home</span>
         </a>
       </Button>
     </WithTooltip>
@@ -200,7 +176,6 @@ interface HeaderOverflowMenuProps {
   onNew: () => void;
   onOpen: () => void;
   onTemplates: () => void;
-  onLogo: () => void;
   onSize: () => void;
   onHelp: () => void;
   onTheme: () => void;
@@ -211,7 +186,6 @@ function HeaderOverflowMenu({
   onNew,
   onOpen,
   onTemplates,
-  onLogo,
   onSize,
   onHelp,
   onTheme,
@@ -244,10 +218,6 @@ function HeaderOverflowMenu({
         <DropdownMenuItem onSelect={onTemplates}>
           <LayoutTemplate className="h-3.5 w-3.5" />
           Templates
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={onLogo}>
-          <ImageIcon className="h-3.5 w-3.5" />
-          Logo
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onSize}>
           <Ruler className="h-3.5 w-3.5" />
@@ -287,7 +257,7 @@ const HeaderButton = forwardRef<
       {...props}
     >
       {children}
-      <span className="hidden lg:inline">{label}</span>
+      <span className="hidden xl:inline">{label}</span>
     </Button>
   );
 
