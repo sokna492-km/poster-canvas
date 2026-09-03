@@ -13,6 +13,23 @@ export default function Poster() {
     expect(diagnostics.filter((d) => d.severity === "error")).toHaveLength(0);
   });
 
+  it("strips named react hook imports without rewriting them", () => {
+    // Sandbox injects useRef/useState/etc. as locals; rewriting here would
+    // collide with those bindings at runtime.
+    const source = `import { useRef, useState } from "react";
+export default function Poster() {
+  const ref = useRef(null);
+  const [n, setN] = useState(0);
+  return <div>{n}</div>;
+}`;
+    const { code, diagnostics } = preprocess(source);
+    expect(code).not.toContain("import");
+    expect(code).not.toContain("const { useRef, useState } = React");
+    expect(code).toContain("useRef(null)");
+    expect(code).toContain("useState(0)");
+    expect(diagnostics.filter((d) => d.severity === "error")).toHaveLength(0);
+  });
+
   it("rewrites @poster/core imports", () => {
     const source = `import { Poster, Text } from "@poster/core";
 export default function Poster() {

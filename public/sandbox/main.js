@@ -177,7 +177,16 @@ function compile(code, assets) {
     presets: [["react", { runtime: "classic" }], "typescript"],
     sourceType: "script",
   });
-  const body = `${output.code}\n;return typeof __default !== "undefined" ? __default : (typeof Poster !== "undefined" ? Poster : null);`;
+  // Preprocess strips `import … from "react"`, so expose common hooks/helpers as
+  // locals. Poster code can use `useRef` / `useState` without React.useRef.
+  const body = `const {
+  useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef,
+  useReducer, useContext, useId, useImperativeHandle, useDeferredValue,
+  useTransition, useSyncExternalStore, Fragment, createElement, createContext,
+  forwardRef, memo, lazy, Suspense, Children, cloneElement, isValidElement,
+} = React;
+${output.code}
+;return typeof __default !== "undefined" ? __default : (typeof Poster !== "undefined" ? Poster : null);`;
   // eslint-disable-next-line no-new-func -- intentional: sandboxed document only
   const factory = new Function("React", "PosterCore", "assets", body);
   return factory(React, PosterCore, assets);

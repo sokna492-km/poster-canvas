@@ -59,7 +59,11 @@ export function ProjectManagerDialog() {
                     <div className="truncate text-sm font-medium">{project.name}</div>
                     <div className="text-xs text-muted-foreground">
                       {project.width} × {project.height} ·{" "}
-                      {new Date(project.updatedAt).toLocaleDateString()}
+                      {new Date(project.updatedAt).toLocaleString(undefined, {
+                        timeZone: "Asia/Phnom_Penh",
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}
                     </div>
                   </button>
                   {current?.id === project.id && <span className="text-xs text-primary">Open</span>}

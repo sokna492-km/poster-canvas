@@ -107,6 +107,9 @@ export function preprocess(source: string): PreprocessResult {
   });
 
   code = code.replace(IMPORT_RE, (match, clause: string, module: string, offset: number) => {
+    // React is provided by the sandbox (`React` + common hooks as locals).
+    // Drop the import so we do not emit a second `const { useRef } = …` that
+    // would collide with those locals.
     if (REACT_MODULES.has(module)) return "";
     if (CORE_MODULES.has(module)) {
       const named = clause.match(/\{([\s\S]*?)\}/);

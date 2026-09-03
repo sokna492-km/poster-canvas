@@ -4,7 +4,7 @@
 
 `preprocess()` in `src/core/compiler/preprocess.ts`:
 
-- Removes React imports (provided by sandbox)
+- Removes React imports (sandbox provides `React` plus common hooks as locals)
 - Rewrites `@poster/core` → `PosterCore` destructuring
 - Converts `export default` to `const __default = …`
 - Emits diagnostics for unsupported imports or missing poster component

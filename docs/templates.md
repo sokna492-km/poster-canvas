@@ -1,11 +1,10 @@
 # Templates
 
-Eleven templates ship in `src/data/templates.ts`. Open **Templates** from the toolbar or command palette (`Cmd/Ctrl+P` → Open Templates).
+Twelve templates ship in `src/data/templates.ts`. Open **Templates** from the toolbar or command palette (`Cmd/Ctrl+P` → Open Templates).
 
 | Template               | Category    | Size      |
 | ---------------------- | ----------- | --------- |
 | Phnom Penh Boulevards  | Education   | 1080×1080 |
-| Minimal Event Poster   | Minimal     | 1080×1350 |
 | Corporate Announcement | Corporate   | 1080×1350 |
 | Social Media Post      | Social      | 1080×1080 |
 | Business Infographic   | Infographic | 1080×1350 |
