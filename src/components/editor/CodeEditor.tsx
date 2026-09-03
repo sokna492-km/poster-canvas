@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef } from "react";
 import type { editor as MonacoEditor } from "monaco-editor";
 import { CopyAiPromptMenu } from "@/components/editor/CopyAiPromptMenu";
+import { MobileCodeEditor } from "@/components/editor/MobileCodeEditor";
 import type { Diagnostic } from "@/core/types";
 import { useViewportTier } from "@/hooks/use-viewport-tier";
 import { configureMonacoForPosterTsx, POSTER_EDITOR_PATH } from "@/lib/monacoTsx";
@@ -43,12 +44,14 @@ export function CodeEditor({ className }: CodeEditorProps) {
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
 
   useEffect(() => {
+    if (tier === "small") return;
     const monaco = (window as Window & { monaco?: typeof import("monaco-editor") }).monaco;
     if (!monaco) return;
     monaco.editor.setTheme(monacoTheme);
-  }, [monacoTheme]);
+  }, [monacoTheme, tier]);
 
   useEffect(() => {
+    if (tier === "small") return;
     const editor = editorRef.current;
     if (!editor) return;
     const model = editor.getModel();
@@ -56,7 +59,20 @@ export function CodeEditor({ className }: CodeEditorProps) {
     const monaco = (window as Window & { monaco?: typeof import("monaco-editor") }).monaco;
     if (!monaco) return;
     monaco.editor.setModelMarkers(model, "poster", diagnosticsToMarkers(diagnostics));
-  }, [diagnostics]);
+  }, [diagnostics, tier]);
+
+  if (tier === "small") {
+    return (
+      <div
+        className={cn(
+          "relative min-h-0 overflow-hidden",
+          className ?? "studio-editor-panel h-full w-full",
+        )}
+      >
+        <MobileCodeEditor />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -115,13 +131,11 @@ export function CodeEditor({ className }: CodeEditorProps) {
         />
       </Suspense>
 
-      {tier !== "small" ? (
-        <div className="pointer-events-none absolute bottom-3 right-12 z-20">
-          <div className="pointer-events-auto">
-            <CopyAiPromptMenu />
-          </div>
+      <div className="pointer-events-none absolute bottom-3 right-12 z-20">
+        <div className="pointer-events-auto">
+          <CopyAiPromptMenu />
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }

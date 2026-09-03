@@ -3,6 +3,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { ClearCodeButton } from "@/components/editor/ClearCodeButton";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import { CopyAiPromptMenu } from "@/components/editor/CopyAiPromptMenu";
+import { PasteCodeButton } from "@/components/editor/PasteCodeButton";
 import { PosterPreview } from "@/components/preview/PosterPreview";
 import { useViewportTier } from "@/hooks/use-viewport-tier";
 import { useUiStore } from "@/stores/uiStore";
@@ -29,7 +30,12 @@ export function StudioLayout({ iframeRef }: StudioLayoutProps) {
             <TabsTrigger value="preview">Preview</TabsTrigger>
           </TabsList>
           <div className="ml-auto flex items-center gap-1">
-            {workspaceTab === "code" ? <ClearCodeButton /> : null}
+            {workspaceTab === "code" ? (
+              <>
+                <PasteCodeButton />
+                <ClearCodeButton />
+              </>
+            ) : null}
             <CopyAiPromptMenu
               iconOnly={false}
               label="Prompt"
