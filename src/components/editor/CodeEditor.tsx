@@ -1,17 +1,13 @@
 import { lazy, Suspense, useEffect, useRef } from "react";
 import type { editor as MonacoEditor } from "monaco-editor";
-import { Sparkles } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { WithTooltip } from "@/components/ui/tooltip";
+import { CopyAiPromptMenu } from "@/components/editor/CopyAiPromptMenu";
 import type { Diagnostic } from "@/core/types";
-import { buildPosterAiPrompt } from "@/data/aiPrompt";
-import { DEFAULT_SIZE } from "@/data/sizes";
+import { useViewportTier } from "@/hooks/use-viewport-tier";
+import { configureMonacoForPosterTsx, POSTER_EDITOR_PATH } from "@/lib/monacoTsx";
 import { monacoThemeFor } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { useEditorStore } from "@/stores/editorStore";
 import { usePreviewStore } from "@/stores/previewStore";
-import { useProjectStore } from "@/stores/projectStore";
 import { useUiStore } from "@/stores/uiStore";
 
 const Monaco = lazy(() =>
@@ -38,12 +34,11 @@ function diagnosticsToMarkers(diagnostics: Diagnostic[]): MonacoEditor.IMarkerDa
 }
 
 export function CodeEditor({ className }: CodeEditorProps) {
+  const tier = useViewportTier();
   const code = useEditorStore((s) => s.code);
   const setCode = useEditorStore((s) => s.setCode);
   const diagnostics = usePreviewStore((s) => s.diagnostics);
   const theme = useUiStore((s) => s.theme);
-  const width = useProjectStore((s) => s.current?.width ?? DEFAULT_SIZE.width);
-  const height = useProjectStore((s) => s.current?.height ?? DEFAULT_SIZE.height);
   const monacoTheme = monacoThemeFor(theme);
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
 
@@ -63,17 +58,13 @@ export function CodeEditor({ className }: CodeEditorProps) {
     monaco.editor.setModelMarkers(model, "poster", diagnosticsToMarkers(diagnostics));
   }, [diagnostics]);
 
-  async function copyAiPrompt() {
-    try {
-      await navigator.clipboard.writeText(buildPosterAiPrompt(width, height));
-      toast.success("AI prompt copied");
-    } catch {
-      toast.error("Could not copy prompt");
-    }
-  }
-
   return (
-    <div className={cn("relative", className ?? "studio-editor-panel h-full w-full")}>
+    <div
+      className={cn(
+        "relative min-h-0 overflow-hidden",
+        className ?? "studio-editor-panel h-full w-full",
+      )}
+    >
       <Suspense
         fallback={
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -83,13 +74,16 @@ export function CodeEditor({ className }: CodeEditorProps) {
       >
         <Monaco
           height="100%"
+          path={POSTER_EDITOR_PATH}
           defaultLanguage="typescript"
           theme={monacoTheme}
           value={code}
+          beforeMount={configureMonacoForPosterTsx}
           onChange={(value) => setCode(value ?? "")}
           onMount={(editor, monaco) => {
             editorRef.current = editor;
             (window as Window & { monaco?: typeof monaco }).monaco = monaco;
+            configureMonacoForPosterTsx(monaco);
             editor.updateOptions({
               fontSize: 13,
               minimap: { enabled: false },
@@ -106,6 +100,14 @@ export function CodeEditor({ className }: CodeEditorProps) {
                 useEditorStore.getState().run();
               },
             });
+            const model = editor.getModel();
+            if (model) {
+              monaco.editor.setModelMarkers(
+                model,
+                "poster",
+                diagnosticsToMarkers(usePreviewStore.getState().diagnostics),
+              );
+            }
           }}
           options={{
             padding: { top: 12 },
@@ -113,20 +115,13 @@ export function CodeEditor({ className }: CodeEditorProps) {
         />
       </Suspense>
 
-      <div className="pointer-events-none absolute bottom-3 right-8 z-10">
-        <WithTooltip label="Copy AI prompt" side="left">
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon"
-            className="pointer-events-auto h-8 w-8 shadow-md transition-transform duration-200 ease-out hover:scale-110 hover:shadow-lg active:scale-95"
-            aria-label="Copy AI prompt"
-            onClick={() => void copyAiPrompt()}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-          </Button>
-        </WithTooltip>
-      </div>
+      {tier !== "small" ? (
+        <div className="pointer-events-none absolute bottom-3 right-12 z-20">
+          <div className="pointer-events-auto">
+            <CopyAiPromptMenu />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

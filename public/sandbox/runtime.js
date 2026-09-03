@@ -9,6 +9,19 @@ const h = React.createElement;
 
 const px = (v) => (typeof v === "number" ? `${v}px` : v);
 
+/**
+ * Stable export metadata for PSD / data exporters.
+ * Author-supplied data-poster-layer* wins over defaults.
+ */
+function layerAttrs(type, name, rest = {}) {
+  const { "data-poster-layer": userLayer, "data-poster-layer-name": userName, ...clean } = rest;
+  return {
+    ...clean,
+    "data-poster-layer": userLayer ?? type,
+    "data-poster-layer-name": userName ?? name ?? type,
+  };
+}
+
 function getKatex() {
   return typeof globalThis !== "undefined" ? globalThis.katex : undefined;
 }
@@ -25,8 +38,9 @@ function resolveTexSource(tex, children) {
 /**
  * Render TeX/KaTeX to HTML. Prefer `<Math tex="..." />` or `$...$` inside `<Text>`.
  * Aliases: Latex, KaTeX.
+ * Local name avoids shadowing the built-in Math object used by charts (cos/sin/max/…).
  */
-export function Math({
+function MathComponent({
   tex,
   children,
   display = false,
@@ -47,10 +61,16 @@ export function Math({
     ...style,
   };
 
+  const mathLayer = layerAttrs(display ? "block-math" : "math", display ? "BlockMath" : "Math");
+
   if (!katex || typeof katex.renderToString !== "function") {
     return h(
       tag,
-      { className, style: { ...baseStyle, color: color ?? "#b91c1c", fontFamily: "monospace" } },
+      {
+        className,
+        style: { ...baseStyle, color: color ?? "#b91c1c", fontFamily: "monospace" },
+        ...mathLayer,
+      },
       expr || "[KaTeX unavailable]",
     );
   }
@@ -69,6 +89,7 @@ export function Math({
       className,
       style: baseStyle,
       dangerouslySetInnerHTML: { __html: html },
+      ...mathLayer,
     });
   } catch (error) {
     return h(
@@ -77,19 +98,22 @@ export function Math({
         className,
         style: { ...baseStyle, color: "#b91c1c", fontFamily: "monospace", whiteSpace: "pre-wrap" },
         title: String(error?.message ?? error),
+        ...mathLayer,
       },
       expr,
     );
   }
 }
 
+export { MathComponent as Math };
+
 /** Display-mode math (block). Equivalent to `<Math display size={48} />`. */
 export function BlockMath({ size = 48, ...props }) {
-  return h(Math, { ...props, size, display: true });
+  return h(MathComponent, { ...props, size, display: true });
 }
 
-export const Latex = Math;
-export const KaTeX = Math;
+export const Latex = MathComponent;
+export const KaTeX = MathComponent;
 
 function renderTextWithMath(children) {
   if (typeof children === "string") {
@@ -99,7 +123,7 @@ function renderTextWithMath(children) {
     }
     return segments.map((seg, i) => {
       if (seg.type === "text") return seg.value;
-      return h(Math, { key: i, tex: seg.value, display: seg.display });
+      return h(MathComponent, { key: i, tex: seg.value, display: seg.display });
     });
   }
 
@@ -125,19 +149,31 @@ export function Poster({
   color = "#111111",
   className = "",
   style = {},
+  ...rest
 }) {
   return h(
     "div",
     {
       className: `relative w-full h-full flex flex-col overflow-hidden ${className}`,
       style: { background, color, ...style },
+      "data-poster-root": "true",
+      "data-poster-background": typeof background === "string" ? background : undefined,
+      ...layerAttrs("poster", "Poster", rest),
     },
     children,
   );
 }
 
 export function Box({ children, className = "", padding, style = {}, ...rest }) {
-  return h("div", { className, style: { padding: px(padding), ...style }, ...rest }, children);
+  return h(
+    "div",
+    {
+      className,
+      style: { padding: px(padding), ...style },
+      ...layerAttrs("box", "Box", rest),
+    },
+    children,
+  );
 }
 
 export function Text({
@@ -149,6 +185,7 @@ export function Text({
   lineHeight = 1.2,
   className = "",
   style = {},
+  ...rest
 }) {
   return h(
     "div",
@@ -162,17 +199,28 @@ export function Text({
         lineHeight,
         ...style,
       },
+      ...layerAttrs("text", "Text", rest),
     },
     renderTextWithMath(children),
   );
 }
 
-export function Image({ src, alt = "", width, height, fit = "cover", className = "", style = {} }) {
+export function Image({
+  src,
+  alt = "",
+  width,
+  height,
+  fit = "cover",
+  className = "",
+  style = {},
+  ...rest
+}) {
   return h("img", {
     src,
     alt,
     className,
     style: { width: px(width), height: px(height), objectFit: fit, ...style },
+    ...layerAttrs("image", "Image", rest),
   });
 }
 
@@ -191,7 +239,7 @@ export function getPosterAssets() {
  * Inline brand logo for user code. Reads the project asset registry.
  * When present in JSX, the parent skips the automatic corner overlay.
  */
-export function Logo({ maxHeight = 64, className = "", style = {}, alt = "Logo" }) {
+export function Logo({ maxHeight = 64, className = "", style = {}, alt = "Logo", ...rest }) {
   const logo = posterAssets?.logo;
   if (!logo?.dataUrl) return null;
   return h("img", {
@@ -206,6 +254,7 @@ export function Logo({ maxHeight = 64, className = "", style = {}, alt = "Logo" 
       display: "block",
       ...style,
     },
+    ...layerAttrs("logo", "Logo", rest),
   });
 }
 
@@ -242,6 +291,7 @@ export function LogoOverlay({ slot, src }) {
       objectFit: "contain",
       display: "block",
     },
+    ...layerAttrs("logo", "Logo"),
   });
 }
 
@@ -252,6 +302,7 @@ export function Shape({
   radius = 0,
   className = "",
   style = {},
+  ...rest
 }) {
   return h("div", {
     className,
@@ -262,10 +313,18 @@ export function Shape({
       borderRadius: px(radius),
       ...style,
     },
+    ...layerAttrs("shape", "Shape", rest),
   });
 }
 
-export function Circle({ size = 200, color = "#000", className = "", children, style = {} }) {
+export function Circle({
+  size = 200,
+  color = "#000",
+  className = "",
+  children,
+  style = {},
+  ...rest
+}) {
   return h(
     "div",
     {
@@ -277,6 +336,7 @@ export function Circle({ size = 200, color = "#000", className = "", children, s
         borderRadius: "9999px",
         ...style,
       },
+      ...layerAttrs("circle", "Circle", rest),
     },
     children,
   );
@@ -289,6 +349,7 @@ export function Line({
   vertical = false,
   className = "",
   style = {},
+  ...rest
 }) {
   return h("div", {
     className,
@@ -298,6 +359,7 @@ export function Line({
       background: color,
       ...style,
     },
+    ...layerAttrs("line", "Line", rest),
   });
 }
 
@@ -309,6 +371,7 @@ export function Stack({
   justify,
   className = "",
   style = {},
+  ...rest
 }) {
   return h(
     "div",
@@ -321,12 +384,13 @@ export function Stack({
         justifyContent: justify,
         ...style,
       },
+      ...layerAttrs("stack", "Stack", rest),
     },
     children,
   );
 }
 
-export function Grid({ children, columns = 2, gap = 16, className = "", style = {} }) {
+export function Grid({ children, columns = 2, gap = 16, className = "", style = {}, ...rest }) {
   return h(
     "div",
     {
@@ -337,15 +401,17 @@ export function Grid({ children, columns = 2, gap = 16, className = "", style = 
         gap: px(gap),
         ...style,
       },
+      ...layerAttrs("grid", "Grid", rest),
     },
     children,
   );
 }
 
-export function Divider({ color = "#e5e7eb", thickness = 2, className = "", style = {} }) {
+export function Divider({ color = "#e5e7eb", thickness = 2, className = "", style = {}, ...rest }) {
   return h("div", {
     className,
     style: { height: px(thickness), background: color, width: "100%", ...style },
+    ...layerAttrs("divider", "Divider", rest),
   });
 }
 
@@ -355,6 +421,7 @@ export function Badge({
   background = "#f3f4f6",
   className = "",
   style = {},
+  ...rest
 }) {
   return h(
     "span",
@@ -369,6 +436,7 @@ export function Badge({
         fontWeight: 600,
         ...style,
       },
+      ...layerAttrs("badge", "Badge", rest),
     },
     children,
   );
@@ -380,6 +448,7 @@ export function Button({
   color = "#fff",
   className = "",
   style = {},
+  ...rest
 }) {
   return h(
     "span",
@@ -394,12 +463,19 @@ export function Button({
         fontWeight: 600,
         ...style,
       },
+      ...layerAttrs("button", "Button", rest),
     },
     children,
   );
 }
 
-export function Icon({ name = "star", size = 48, color = "currentColor", className = "" }) {
+export function Icon({
+  name = "star",
+  size = 48,
+  color = "currentColor",
+  className = "",
+  ...rest
+}) {
   const paths = {
     star: "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z",
     check: "M20 6L9 17l-5-5",
@@ -420,6 +496,7 @@ export function Icon({ name = "star", size = 48, color = "currentColor", classNa
       strokeWidth: 2,
       strokeLinecap: "round",
       strokeLinejoin: "round",
+      ...layerAttrs("icon", "Icon", rest),
     },
     h("path", { d: paths[name] ?? paths.star }),
   );
@@ -431,6 +508,7 @@ export function QRCode({
   color = "#000",
   background = "#fff",
   className = "",
+  ...rest
 }) {
   // Deterministic decorative matrix — not a scannable QR code (see docs/poster-api.md).
   const cells = 21;
@@ -456,6 +534,7 @@ export function QRCode({
       height: size,
       viewBox: `0 0 ${cells} ${cells}`,
       shapeRendering: "crispEdges",
+      ...layerAttrs("qrcode", "QRCode", rest),
     },
     h("rect", { width: cells, height: cells, fill: background }),
     rects,
@@ -471,6 +550,7 @@ export function BarChart({
   color = "#111",
   gap = 12,
   className = "",
+  ...rest
 }) {
   const max = Math.max(...data, 1);
   return h(
@@ -478,6 +558,7 @@ export function BarChart({
     {
       className,
       style: { height: px(height), display: "flex", alignItems: "flex-end", gap: px(gap) },
+      ...layerAttrs("bar-chart", "BarChart", rest),
     },
     data.map((value, i) =>
       h(
@@ -514,6 +595,7 @@ export function LineChart({
   strokeWidth = 4,
   fill = true,
   className = "",
+  ...rest
 }) {
   const max = Math.max(...data, 1);
   const min = Math.min(...data, 0);
@@ -525,7 +607,14 @@ export function LineChart({
   });
   return h(
     "svg",
-    { className, width: "100%", height, viewBox: "0 0 100 100", preserveAspectRatio: "none" },
+    {
+      className,
+      width: "100%",
+      height,
+      viewBox: "0 0 100 100",
+      preserveAspectRatio: "none",
+      ...layerAttrs("line-chart", "LineChart", rest),
+    },
     fill && points.length
       ? h("polygon", { points: `0,100 ${points.join(" ")} 100,100`, fill: color, opacity: 0.18 })
       : null,
@@ -539,7 +628,7 @@ export function LineChart({
   );
 }
 
-export function PieChart({ data = [], size = 260, className = "" }) {
+export function PieChart({ data = [], size = 260, className = "", ...rest }) {
   const total = data.reduce((sum, d) => sum + (d.value || 0), 0) || 1;
   let angle = -Math.PI / 2;
   const r = 50;
@@ -558,7 +647,17 @@ export function PieChart({ data = [], size = 260, className = "" }) {
       fill: d.color || `hsl(${(i * 67) % 360} 70% 55%)`,
     });
   });
-  return h("svg", { className, width: size, height: size, viewBox: "0 0 100 100" }, slices);
+  return h(
+    "svg",
+    {
+      className,
+      width: size,
+      height: size,
+      viewBox: "0 0 100 100",
+      ...layerAttrs("pie-chart", "PieChart", rest),
+    },
+    slices,
+  );
 }
 
 export function Progress({
@@ -567,10 +666,11 @@ export function Progress({
   color = "#111",
   background = "#e5e7eb",
   className = "",
+  ...rest
 }) {
   return h(
     "div",
-    { className },
+    { className, ...layerAttrs("progress", "Progress", rest) },
     label
       ? h(
           "div",
@@ -600,20 +700,36 @@ export function Progress({
   );
 }
 
-export function Metric({ label, value, delta, className = "" }) {
+export function Metric({ label, value, delta, className = "", ...rest }) {
+  const metricJson = JSON.stringify({
+    label: label ?? "",
+    value: value ?? "",
+    delta: delta ?? "",
+  });
   return h(
     "div",
-    { className, style: { border: "2px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: 28 } },
+    {
+      className,
+      style: { border: "2px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: 28 },
+      "data-poster-metric": metricJson,
+      ...layerAttrs("metric", typeof label === "string" && label ? label : "Metric", rest),
+    },
     h("div", { style: { fontSize: 26, opacity: 0.6 } }, label),
     h("div", { style: { fontSize: 68, fontWeight: 700, lineHeight: 1.1 } }, value),
     delta ? h("div", { style: { fontSize: 26, opacity: 0.7 } }, delta) : null,
   );
 }
 
-export function Table({ columns = [], rows = [], fontSize = 28, className = "" }) {
+export function Table({ columns = [], rows = [], fontSize = 28, className = "", ...rest }) {
+  const tableJson = JSON.stringify({ columns, rows });
   return h(
     "table",
-    { className, style: { width: "100%", borderCollapse: "collapse", fontSize } },
+    {
+      className,
+      style: { width: "100%", borderCollapse: "collapse", fontSize },
+      "data-poster-table": tableJson,
+      ...layerAttrs("table", "Table", rest),
+    },
     h(
       "thead",
       null,

@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-import { Sparkles } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,19 +8,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CopyAiPromptMenu } from "@/components/editor/CopyAiPromptMenu";
 import { ONBOARDING_STEPS } from "@/data/onboardingSteps";
-import { buildPosterAiPrompt } from "@/data/aiPrompt";
-import { DEFAULT_SIZE } from "@/data/sizes";
 import { markOnboardingComplete } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
-import { useProjectStore } from "@/stores/projectStore";
 import { useUiStore } from "@/stores/uiStore";
 
 export function OnboardingDialog() {
   const open = useUiStore((s) => s.onboardingOpen);
   const setOpen = useUiStore((s) => s.setOnboardingOpen);
-  const width = useProjectStore((s) => s.current?.width ?? DEFAULT_SIZE.width);
-  const height = useProjectStore((s) => s.current?.height ?? DEFAULT_SIZE.height);
   const [step, setStep] = useState(0);
 
   const total = ONBOARDING_STEPS.length;
@@ -42,15 +36,6 @@ export function OnboardingDialog() {
   function onOpenChange(next: boolean) {
     if (!next) completeAndClose();
     else setOpen(true);
-  }
-
-  async function copyAiPrompt() {
-    try {
-      await navigator.clipboard.writeText(buildPosterAiPrompt(width, height));
-      toast.success("AI prompt copied");
-    } catch {
-      toast.error("Could not copy prompt");
-    }
   }
 
   return (
@@ -76,15 +61,7 @@ export function OnboardingDialog() {
           ) : null}
 
           {current.showCopyPrompt ? (
-            <Button
-              type="button"
-              variant="secondary"
-              className="gap-2"
-              onClick={() => void copyAiPrompt()}
-            >
-              <Sparkles className="h-4 w-4" />
-              Copy AI prompt
-            </Button>
+            <CopyAiPromptMenu iconOnly={false} side="bottom" />
           ) : null}
 
           <div className="flex items-center justify-center gap-1.5 pt-1">

@@ -21,10 +21,10 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: "copy-prompt",
     title: "Copy the AI prompt",
-    body: "Poster Studio includes a ready-made prompt template sized for your canvas. Copy it, then fill in the bracketed fields to match your idea.",
+    body: "Pick a format from the prompt menu. Each template uses the standard canvas for that format (for example slides are 1920×1080) and resizes the studio to match. Copy it, then fill in the bracketed fields.",
     bullets: [
-      "Use the button below, or the sparkle control in the code editor",
-      "Edit titles, style notes, and must-include details before sending",
+      "Use the button below, the Prompt control next to Code/Preview on phones, or the sparkle control in the code editor on larger screens",
+      "Choose the format that matches your idea, then edit the brackets before sending",
     ],
     showCopyPrompt: true,
   },

@@ -4,13 +4,23 @@ export const POSTER_SIZES: PosterSizePreset[] = [
   { id: "ig-portrait", label: "Instagram Portrait", group: "Social", width: 1080, height: 1350 },
   { id: "square", label: "Square", group: "Social", width: 1080, height: 1080 },
   { id: "story", label: "Story", group: "Social", width: 1080, height: 1920 },
+  { id: "open-graph", label: "Open Graph", group: "Social", width: 1200, height: 630 },
   { id: "poster", label: "Poster", group: "Print", width: 1200, height: 1500 },
-  { id: "landscape", label: "Landscape", group: "Screen", width: 1920, height: 1080 },
   { id: "a4-p", label: "A4 Portrait", group: "Print", width: 2480, height: 3508 },
   { id: "a4-l", label: "A4 Landscape", group: "Print", width: 3508, height: 2480 },
   { id: "a3-p", label: "A3 Portrait", group: "Print", width: 3508, height: 4961 },
   { id: "a3-l", label: "A3 Landscape", group: "Print", width: 4961, height: 3508 },
+  { id: "letter-p", label: "Letter Portrait", group: "Print", width: 2550, height: 3300 },
+  { id: "letter-l", label: "Letter Landscape", group: "Print", width: 3300, height: 2550 },
+  { id: "landscape", label: "HD 16:9", group: "Screen", width: 1920, height: 1080 },
+  { id: "slide-16-10", label: "Slide 16:10", group: "Screen", width: 1920, height: 1200 },
+  { id: "desktop", label: "Desktop", group: "Device", width: 1440, height: 900 },
+  { id: "laptop", label: "Laptop", group: "Device", width: 1280, height: 800 },
+  { id: "tablet", label: "Tablet", group: "Device", width: 768, height: 1024 },
+  { id: "phone", label: "Phone", group: "Device", width: 1080, height: 2340 },
 ];
+
+export const SIZE_GROUPS = ["Social", "Print", "Screen", "Device"] as const;
 
 export const DEFAULT_SIZE = POSTER_SIZES.find((s) => s.id === "square") ?? POSTER_SIZES[0]!;
 

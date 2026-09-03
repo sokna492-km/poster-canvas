@@ -18,16 +18,16 @@ import { Poster, Box, Text, Stack, Grid } from "@poster/core";
 
 ## Typography & media
 
-| Component   | Description                                          |
-| ----------- | ---------------------------------------------------- |
+| Component   | Description                                                                                 |
+| ----------- | ------------------------------------------------------------------------------------------- |
 | `Text`      | Styled text (`size`, `weight`, `color`); auto-renders `$…$` / `$$…$$` / `\(...\)` / `\[…\]` |
-| `Math`      | Inline KaTeX (`tex`, or string `children`; optional `size`) |
-| `BlockMath` | Display (block) KaTeX (default `size={48}`)              |
-| `Image`     | `<img>` with object-fit helpers                      |
-| `Logo`      | Brand mark from the project logo asset               |
-| `Icon`      | Lucide-style icon placeholder                        |
-| `Badge`     | Small label chip                                     |
-| `Button`    | Styled button                                        |
+| `Math`      | Inline KaTeX (`tex`, or string `children`; optional `size`)                                 |
+| `BlockMath` | Display (block) KaTeX (default `size={48}`)                                                 |
+| `Image`     | `<img>` with object-fit helpers                                                             |
+| `Logo`      | Brand mark from the project logo asset                                                      |
+| `Icon`      | Lucide-style icon placeholder                                                               |
+| `Badge`     | Small label chip                                                                            |
+| `Button`    | Styled button                                                                               |
 
 `Latex` and `KaTeX` are aliases of `Math`.
 
@@ -70,7 +70,8 @@ export default function App() {
   return (
     <Poster className="p-24 bg-white text-slate-900">
       <Text size={48}>
-        Inline via Text: $E = mc^2$ and \(\frac{a}{b}\)
+        Inline via Text: $E = mc^2$ and \(\frac{a}
+        {b}\)
       </Text>
       <Math tex="e^{i\pi}+1=0" />
       <BlockMath tex={String.raw`\sum_{n=1}^{N} n = \frac{N(N+1)}{2}`} />
@@ -112,17 +113,20 @@ export default function App() {
 
 When `<Logo` appears in your code, the automatic corner overlay is skipped so the mark is not drawn twice. The compile scope also exposes an `assets` object (`assets.logo?.dataUrl`) for custom `<Image src={assets.logo.dataUrl} />` usage.
 
-
 ### Default fonts
 
 The sandbox loads **IBM Plex Sans** (Latin) and **Kantumruy Pro** (Khmer). Khmer characters use Kantumruy Pro by default unless you set your own `font-family` via `style`, a Tailwind `font-*` class, or a custom `@font-face`.
 
 ```tsx
-{/* Uses default stack (Kantumruy Pro for Khmer) */}
-<Text>សួស្តី · Hello</Text>
+{
+  /* Uses default stack (Kantumruy Pro for Khmer) */
+}
+<Text>សួស្តី · Hello</Text>;
 
-{/* Override */}
-<p style={{ fontFamily: '"Noto Sans Khmer", sans-serif' }}>សួស្តី</p>
+{
+  /* Override */
+}
+<p style={{ fontFamily: '"Noto Sans Khmer", sans-serif' }}>សួស្តី</p>;
 ```
 
 ## Shapes
@@ -151,3 +155,18 @@ The sandbox loads **IBM Plex Sans** (Latin) and **Kantumruy Pro** (Khmer). Khmer
 | `QRCode`  | Decorative QR placeholder |
 
 Plain HTML elements and Tailwind classes also work inside the poster root.
+
+## Export layer metadata
+
+`@poster/core` components set stable attributes used by PSD / CSV / XLSX export:
+
+| Attribute                | Purpose                                      |
+| ------------------------ | -------------------------------------------- |
+| `data-poster-root`       | Set on `<Poster>`                            |
+| `data-poster-background` | Solid background color string when provided  |
+| `data-poster-layer`      | Layer type (`text`, `logo`, `table`, …)      |
+| `data-poster-layer-name` | Human-readable layer name                    |
+| `data-poster-metric`     | JSON `{ label, value, delta }` on `<Metric>` |
+| `data-poster-table`      | JSON `{ columns, rows }` on `<Table>`        |
+
+You can override `data-poster-layer` / `data-poster-layer-name` on any component. Raw HTML posters only get Background + Content + Logo unless you add the same attributes yourself.

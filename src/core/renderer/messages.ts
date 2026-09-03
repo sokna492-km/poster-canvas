@@ -51,6 +51,14 @@ export type SandboxToParentMessage =
       type: "export-failed";
       requestId: string;
       message: string;
+    }
+  | {
+      source: "poster-sandbox";
+      type: "debug-log";
+      hypothesisId?: string;
+      location?: string;
+      message?: string;
+      data?: unknown;
     };
 
 export function isSandboxMessage(data: unknown): data is SandboxToParentMessage {

@@ -1,6 +1,8 @@
 import type { PosterTemplate } from "@/core/types";
 
-export const STARTER_CODE = `export default function Poster() {
+export const STARTER_CODE = `import { Poster, Image } from "@poster/core";
+
+export default function App() {
   const features = [
     {
       icon: "📚",
@@ -26,7 +28,7 @@ export const STARTER_CODE = `export default function Poster() {
   ];
 
   return (
-    <div className="relative w-full h-full bg-gradient-to-br from-[#F8FAFC] via-[#EFF6FF] to-[#DBEAFE] text-[#0F172A] p-14 flex flex-col justify-between box-border overflow-hidden select-none font-sans">
+    <Poster background="linear-gradient(to bottom right, #F8FAFC, #EFF6FF, #DBEAFE)" color="#0F172A" className="p-14 flex flex-col justify-between box-border select-none font-sans">
       {/* Ambient Glows */}
       <div className="absolute -top-24 -right-24 w-[480px] h-[480px] bg-[#3B82F6]/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-20 -left-20 w-[420px] h-[420px] bg-[#60A5FA]/20 rounded-full blur-3xl pointer-events-none" />
@@ -66,34 +68,30 @@ export const STARTER_CODE = `export default function Poster() {
 
       {/* Top Header: Brand & Identity */}
       <header className="relative z-10 flex items-center justify-between gap-6">
-        <div className="inline-flex items-center gap-3.5 bg-white/90 backdrop-blur-md px-7 py-4 rounded-full border border-blue-100 shadow-sm">
+        <div className="inline-flex items-center gap-3.5 bg-white/90 backdrop-blur-md px-7 py-4 rounded-full border border-blue-100 shadow-sm" data-poster-layer="text" data-poster-layer-name="Brand Badge">
           <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse" />
           <span className="text-2xl font-bold text-[#1E3A8A] tracking-wide">
             បច្ចេកវិទ្យា AI ជំនួយការរៀន
           </span>
         </div>
-        <img
-          src="../KruMath_Horizontal.png"
-          alt="KruMath Interactive"
-          className="h-16 w-auto object-contain shrink-0 drop-shadow-sm"
-        />
+        <Image src="../KruMath_Horizontal.png" alt="KruMath Logo" className="h-16 w-auto object-contain shrink-0 drop-shadow-sm" />
       </header>
 
       {/* Hero Section */}
       <main className="relative z-10 my-auto flex flex-col gap-6">
         <div className="space-y-4">
-          <div className="inline-flex items-center gap-3 bg-[#2563EB]/10 text-[#2563EB] text-2xl font-bold px-5 py-2.5 rounded-2xl border border-[#2563EB]/20">
+          <div className="inline-flex items-center gap-3 bg-[#2563EB]/10 text-[#2563EB] text-2xl font-bold px-5 py-2.5 rounded-2xl border border-[#2563EB]/20" data-poster-layer="text" data-poster-layer-name="Tag Line">
             <span>📐</span> KruMath Interactive — សប្បាយរៀន | ងាយយល់
           </div>
 
-          <h1 className="text-[74px] font-black leading-[1.2] tracking-tight text-[#0F172A]">
+          <h1 className="text-[74px] font-black leading-[1.2] tracking-tight text-[#0F172A]" data-poster-layer="text" data-poster-layer-name="Headline">
             រៀននៅសាលា <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2563EB] via-[#0284C7] to-[#0EA5E9]">
               អ​នុវត្តនៅលើ KruMath
             </span>
           </h1>
 
-          <p className="text-[26px] text-[#475569] font-medium max-w-3xl leading-relaxed">
+          <p className="text-[26px] text-[#475569] font-medium max-w-3xl leading-relaxed" data-poster-layer="text" data-poster-layer-name="Description">
             មិនបាច់ហត់រកសៀវភៅលំហាត់ច្រើននាំតែវិលមុខទេ! នៅលើគេហទំព័រ KruMath មានគ្រប់ទាំងអស់ចាប់ពីថ្នាក់ទី ៧ ដល់ទី ១២។
           </p>
         </div>
@@ -103,6 +101,8 @@ export const STARTER_CODE = `export default function Poster() {
           {features.map((item, idx) => (
             <div
               key={idx}
+              data-poster-layer="text"
+              data-poster-layer-name={\`Feature \${idx + 1}\`}
               className={\`flex items-center gap-4 bg-white/95 backdrop-blur-md px-6 py-4 rounded-2xl border border-blue-100 shadow-sm shadow-blue-950/5 \${
                 item.fullWidth ? "col-span-2" : ""
               }\`}
@@ -127,7 +127,7 @@ export const STARTER_CODE = `export default function Poster() {
 
       {/* Bottom Action Bar */}
       <footer className="relative z-10 bg-white rounded-3xl p-6 border border-blue-100 shadow-xl shadow-blue-500/10 flex items-center justify-between">
-        <div className="pl-4">
+        <div className="pl-4" data-poster-layer="text" data-poster-layer-name="Website URL">
           <p className="text-lg uppercase tracking-wider font-bold text-[#64748B]">
             បង្កើតគណនីដោយឥតគិតថ្លៃ
           </p>
@@ -136,7 +136,7 @@ export const STARTER_CODE = `export default function Poster() {
           </p>
         </div>
 
-        <div className="bg-[#2563EB] hover:bg-blue-700 text-white px-10 py-5 rounded-2xl font-bold text-[26px] shadow-lg shadow-blue-600/30 flex items-center gap-4 cursor-pointer transition-colors">
+        <div className="bg-[#2563EB] hover:bg-blue-700 text-white px-10 py-5 rounded-2xl font-bold text-[26px] shadow-lg shadow-blue-600/30 flex items-center gap-4 cursor-pointer transition-colors" data-poster-layer="text" data-poster-layer-name="CTA Button">
           <span>ចុះឈ្មោះចូលរៀនឥឡូវនេះ</span>
           <svg
             className="w-8 h-8"
@@ -153,7 +153,7 @@ export const STARTER_CODE = `export default function Poster() {
           </svg>
         </div>
       </footer>
-    </div>
+    </Poster>
   );
 }
 `;

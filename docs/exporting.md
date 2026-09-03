@@ -1,31 +1,39 @@
 # Exporting
 
-Export is implemented in the sandbox using [html-to-image](https://github.com/bubkoo/html-to-image) and [jsPDF](https://github.com/parallax/jsPDF) (PDF only).
+Export runs in the preview sandbox (browser). Raster formats use [html-to-image](https://github.com/bubkoo/html-to-image); PDF uses [jsPDF](https://github.com/parallax/jsPDF); SVG uses [dom2svg](https://www.npmjs.com/package/dom2svg); PSD uses [ag-psd](https://github.com/Agamnentzar/ag-psd); PPTX uses [PptxGenJS](https://gitbrent.github.io/PptxGenJS/); XLSX uses SheetJS.
 
 ## Formats
 
-| Format | Notes |
-| ------ | ----- |
-| PNG | Default raster export at 3× scale (adaptive up to 6×) |
-| JPG | White background, quality 1 (browser max) |
-| WebP | Canvas `toDataURL` at quality 1 |
-| SVG | Serialized SVG markup (safe data-URL decode; no scale loop) |
-| PDF | JPEG (quality 1) at 4× scale; sized toward **3–5 MB** |
+| Group    | Format           | Notes                                                                                |
+| -------- | ---------------- | ------------------------------------------------------------------------------------ |
+| Image    | PNG / JPG / WebP | Raster at adaptive scale (see below)                                                 |
+| Vector   | SVG              | Illustrator-compatible (no `foreignObject`); canonical vector                        |
+| Vector   | EPS              | From full-page RGB raster of the poster (unsupported vectors never silently dropped) |
+| Editable | PSD              | Layered bitmap layers via `capturePosterLayers()`                                    |
+| Editable | PPTX             | One custom-sized slide, full-bleed raster (`px / 96` inches)                         |
+| Document | PDF              | JPEG-embedded page, size-banded ~3–5 MB                                              |
+| Data     | CSV / XLSX       | `Metric` / `Table` extraction only; fails if none                                    |
 
-## Quality
+## Quality & scale
 
-- Default `scale` / `pixelRatio` for PNG/JPG/WebP is **3** (`DEFAULT_EXPORT_SCALE`).
-- PDF starts at **4** (`DEFAULT_PDF_EXPORT_SCALE`) via `exportScaleForFormat()`.
-- For PNG, JPG, and WebP, if the decoded payload is under **3 MB**, the sandbox retries at `scale + 1` up to **6**.
-- For PDF: if under **3 MB**, scale up to **5**; if over **5 MB**, scale down to **1**. Still JPEG-embedded (not PNG), so files stay far below the old ~40 MB PNG PDFs.
-- JPG / WebP use `quality: 1`. PDF embed uses `PDF_EXPORT_QUALITY` (1).
-- SVG is vector markup and does not use the scale loops.
+- Default raster scale **3** (`DEFAULT_EXPORT_SCALE`); PDF starts at **4**.
+- **Adaptive cap:** `max(width,height) × scale ≤ MAX_EXPORT_EDGE_PX` (**8192**). Memory-safety guard for A3/A4 @ 300 dpi — not an absolute OOM guarantee.
+- PNG/JPG/WebP may scale up toward **6** (after cap) if under 3 MB.
+- PDF scales within 3–5 MB band.
+- SVG / CSV / XLSX ignore raster scale loops.
+- EPS / PSD / PPTX use the effective raster scale for the artboard.
 
-Constants live in `src/core/export/exportDefaults.ts` (mirrored in `public/sandbox/main.js`).
+Constants: `src/core/export/exportDefaults.ts` (mirrored in `public/sandbox/exportHelpers.js`).
+
+## Layered PSD
+
+1. `@poster/core` sets `data-poster-layer*` (see [poster-api.md](./poster-api.md)).
+2. `capturePosterLayers()` returns bottom-to-top: Background → Content (unmarked, holes for marked) → marked layers (DOM order) → Logo.
+3. Assembled with `ag-psd`.
 
 ## Architecture
 
-The UI calls `SandboxExporter` (`src/core/export/sandboxExporter.ts`), which implements `PosterExporter`:
+UI → `SandboxExporter` → sandbox `export` message → `export-done` / `export-failed`. Timeout **120s**.
 
 ```typescript
 interface PosterExporter {
@@ -33,15 +41,11 @@ interface PosterExporter {
 }
 ```
 
-The exporter sends `{ type: "export", format, scale, requestId }` to the sandbox and resolves when `export-done` arrives. Export timeout is 120 seconds to allow large high-DPI captures.
-
-A future backend renderer can implement the same interface without changing UI code.
-
 ## Download
 
-`exportAndDownload()` triggers a browser download via a temporary `<a>` element (`src/lib/download.ts`).
+`downloadData()` supports text (SVG/EPS/CSV) and large binary data-URLs (PSD/PPTX/XLSX) via Blob object URLs.
 
-## Keyboard / palette
+## UI
 
-- Command palette: Export PNG, Export SVG, Export PDF
-- Toolbar: **Export** dropdown
+- Toolbar **Export** menu grouped: Image / Vector / Editable / Document / Data
+- Command palette: matching Export · * groups

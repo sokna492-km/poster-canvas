@@ -69,28 +69,82 @@ export function usePosterCommands(onExport?: (format: ExportFormat) => void): Po
       {
         id: "export-png",
         label: "Export PNG",
-        group: "Export",
+        group: "Export · Image",
         run: () => {
           setCommandPaletteOpen(false);
           onExport?.("png");
         },
       },
       {
+        id: "export-jpg",
+        label: "Export JPG",
+        group: "Export · Image",
+        run: () => {
+          setCommandPaletteOpen(false);
+          onExport?.("jpg");
+        },
+      },
+      {
+        id: "export-webp",
+        label: "Export WebP",
+        group: "Export · Image",
+        run: () => {
+          setCommandPaletteOpen(false);
+          onExport?.("webp");
+        },
+      },
+      {
         id: "export-svg",
         label: "Export SVG",
-        group: "Export",
+        group: "Export · Vector",
         run: () => {
           setCommandPaletteOpen(false);
           onExport?.("svg");
         },
       },
       {
+        id: "export-psd",
+        label: "Export PSD",
+        group: "Export · Editable",
+        run: () => {
+          setCommandPaletteOpen(false);
+          onExport?.("psd");
+        },
+      },
+      {
+        id: "export-pptx",
+        label: "Export PPTX",
+        group: "Export · Editable",
+        run: () => {
+          setCommandPaletteOpen(false);
+          onExport?.("pptx");
+        },
+      },
+      {
         id: "export-pdf",
         label: "Export PDF",
-        group: "Export",
+        group: "Export · Document",
         run: () => {
           setCommandPaletteOpen(false);
           onExport?.("pdf");
+        },
+      },
+      {
+        id: "export-csv",
+        label: "Export CSV",
+        group: "Export · Data",
+        run: () => {
+          setCommandPaletteOpen(false);
+          onExport?.("csv");
+        },
+      },
+      {
+        id: "export-xlsx",
+        label: "Export XLSX",
+        group: "Export · Data",
+        run: () => {
+          setCommandPaletteOpen(false);
+          onExport?.("xlsx");
         },
       },
       {

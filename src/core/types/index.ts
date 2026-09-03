@@ -67,7 +67,8 @@ export interface Diagnostic {
   kind: "compile" | "runtime" | "preprocess";
 }
 
-export type ExportFormat = "png" | "svg" | "jpg" | "webp" | "pdf";
+export type ExportFormat =
+  "png" | "jpg" | "webp" | "svg" | "psd" | "pptx" | "pdf" | "csv" | "xlsx";
 
 export interface ExportRequest {
   format: ExportFormat;
@@ -77,10 +78,23 @@ export interface ExportRequest {
 
 export interface ExportResult {
   format: ExportFormat;
-  /** Data URL (raster/pdf) or serialized markup (svg). */
+  /** Data URL (raster/pdf/binary) or serialized markup (svg/eps/csv). */
   data: string;
   mimeType: string;
   fileName: string;
+}
+
+/** Layer capture contract (sandbox); array order is bottom-to-top. */
+export interface PosterLayerCapture {
+  id: string;
+  name: string;
+  type: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  canvas: HTMLCanvasElement;
+  zIndex: number;
 }
 
 /** Export abstraction — a backend renderer can implement this later. */

@@ -2,8 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { POSTER_SIZES } from "@/data/sizes";
-import { findSizePreset } from "@/data/sizes";
+import { POSTER_SIZES, SIZE_GROUPS, findSizePreset } from "@/data/sizes";
 import { useProjectStore } from "@/stores/projectStore";
 import { useUiStore } from "@/stores/uiStore";
 import { useEffect, useState } from "react";
@@ -34,24 +33,35 @@ export function SizePickerDialog() {
         <DialogHeader>
           <DialogTitle>Poster Size</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-2">
-          {POSTER_SIZES.map((preset) => (
-            <Button
-              key={preset.id}
-              type="button"
-              variant={width === preset.width && height === preset.height ? "secondary" : "outline"}
-              className="justify-between"
-              onClick={() => {
-                setWidth(preset.width);
-                setHeight(preset.height);
-              }}
-            >
-              <span>{preset.label}</span>
-              <span className="text-muted-foreground">
-                {preset.width} × {preset.height}
-              </span>
-            </Button>
-          ))}
+        <div className="grid gap-4">
+          {SIZE_GROUPS.map((group) => {
+            const presets = POSTER_SIZES.filter((p) => p.group === group);
+            if (presets.length === 0) return null;
+            return (
+              <div key={group} className="grid gap-2">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  {group}
+                </p>
+                {presets.map((preset) => (
+                  <Button
+                    key={preset.id}
+                    type="button"
+                    variant={width === preset.width && height === preset.height ? "secondary" : "outline"}
+                    className="justify-between"
+                    onClick={() => {
+                      setWidth(preset.width);
+                      setHeight(preset.height);
+                    }}
+                  >
+                    <span>{preset.label}</span>
+                    <span className="text-muted-foreground">
+                      {preset.width} × {preset.height}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            );
+          })}
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div>

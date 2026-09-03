@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { CodeEditor } from "@/components/editor/CodeEditor";
+import { CopyAiPromptMenu } from "@/components/editor/CopyAiPromptMenu";
 import { PosterPreview } from "@/components/preview/PosterPreview";
 import { useViewportTier } from "@/hooks/use-viewport-tier";
 import { useUiStore } from "@/stores/uiStore";
@@ -21,10 +22,20 @@ export function StudioLayout({ iframeRef }: StudioLayoutProps) {
         onValueChange={(v) => setWorkspaceTab(v as "code" | "preview")}
         className="flex h-full min-h-0 min-w-0 flex-1 flex-col"
       >
-        <TabsList className="mx-3 mt-2 w-fit shrink-0">
-          <TabsTrigger value="code">Code</TabsTrigger>
-          <TabsTrigger value="preview">Preview</TabsTrigger>
-        </TabsList>
+        <div className="mx-3 mt-2 flex shrink-0 items-center gap-2">
+          <TabsList className="w-fit">
+            <TabsTrigger value="code">Code</TabsTrigger>
+            <TabsTrigger value="preview">Preview</TabsTrigger>
+          </TabsList>
+          <div className="ml-auto">
+            <CopyAiPromptMenu
+              iconOnly={false}
+              label="Prompt"
+              side="bottom"
+              triggerClassName="h-8 gap-1.5 px-2.5 text-xs"
+            />
+          </div>
+        </div>
         <TabsContent
           value="code"
           className="mt-0 min-h-0 min-w-0 flex-1 overflow-hidden data-[state=inactive]:hidden"

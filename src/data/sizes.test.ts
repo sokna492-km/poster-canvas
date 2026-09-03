@@ -7,6 +7,30 @@ describe("sizes", () => {
     expect(findSizePreset(preset.width, preset.height)?.id).toBe(preset.id);
   });
 
+  it("has unique ids and dimensions", () => {
+    const ids = POSTER_SIZES.map((s) => s.id);
+    const dims = POSTER_SIZES.map((s) => `${s.width}x${s.height}`);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(new Set(dims).size).toBe(dims.length);
+  });
+
+  it("includes new presets for prompt formats", () => {
+    const ids = new Set(POSTER_SIZES.map((s) => s.id));
+    for (const id of [
+      "desktop",
+      "laptop",
+      "tablet",
+      "phone",
+      "open-graph",
+      "letter-p",
+      "letter-l",
+      "slide-16-10",
+    ]) {
+      expect(ids.has(id)).toBe(true);
+    }
+    expect(POSTER_SIZES.find((s) => s.id === "landscape")?.label).toBe("HD 16:9");
+  });
+
   it("fitScale never upscales past 1", () => {
     expect(fitScale({ width: 100, height: 100 }, { width: 2000, height: 2000 })).toBe(1);
   });

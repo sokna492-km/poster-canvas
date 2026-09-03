@@ -144,6 +144,31 @@ export class SandboxBridge {
         }
         break;
       }
+      case "debug-log": {
+        // #region agent log
+        const payload = {
+          sessionId: "99918c",
+          runId: "pre-fix",
+          hypothesisId: (data as { hypothesisId?: string }).hypothesisId,
+          location: (data as { location?: string }).location ?? "SandboxBridge.ts:debug-log",
+          message: (data as { message?: string }).message ?? "sandbox debug-log",
+          data: (data as { data?: unknown }).data,
+          timestamp: Date.now(),
+        };
+        const body = JSON.stringify(payload);
+        fetch("http://127.0.0.1:7406/ingest/a837067b-6229-492c-9bf2-1286c0a5726f", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "99918c" },
+          body,
+        }).catch(() => {});
+        fetch(`${import.meta.env.BASE_URL}__agent_debug_log`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "99918c" },
+          body,
+        }).catch(() => {});
+        // #endregion
+        break;
+      }
     }
   }
 }
