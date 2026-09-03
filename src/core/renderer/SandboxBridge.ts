@@ -42,6 +42,15 @@ export class SandboxBridge {
     this.ready = false;
   }
 
+  detach(): void {
+    this.iframe = null;
+    this.ready = false;
+  }
+
+  get isAttached(): boolean {
+    return this.iframe !== null;
+  }
+
   get isReady(): boolean {
     return this.ready;
   }
@@ -101,9 +110,8 @@ export class SandboxBridge {
   }
 
   private handleMessage(event: MessageEvent): void {
-    if (this.iframe?.contentWindow && event.source !== this.iframe.contentWindow) {
-      return;
-    }
+    const win = this.iframe?.contentWindow;
+    if (!win || event.source !== win) return;
 
     const data = event.data;
     if (!isSandboxMessage(data)) return;

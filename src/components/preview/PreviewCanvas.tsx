@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { publicUrl } from "@/lib/publicUrl";
 
 interface PreviewCanvasProps {
-  iframeRef: React.RefObject<HTMLIFrameElement | null>;
+  iframeRef: (node: HTMLIFrameElement | null) => void;
 }
 
 const BACKGROUND_CLASS: Record<string, string> = {
@@ -122,7 +122,7 @@ export function PreviewCanvas({ iframeRef }: PreviewCanvasProps) {
           <iframe
             key={reloadNonce}
             ref={iframeRef}
-            src={`${publicUrl("sandbox/index.html")}?v=dbg-99918c-1`}
+            src={publicUrl("sandbox/index.html")}
             title="Poster preview"
             sandbox="allow-scripts allow-same-origin"
             className="pointer-events-none absolute left-0 top-0 origin-top-left border-0"

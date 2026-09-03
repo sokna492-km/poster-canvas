@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { ClearCodeButton } from "@/components/editor/ClearCodeButton";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import { CopyAiPromptMenu } from "@/components/editor/CopyAiPromptMenu";
 import { PosterPreview } from "@/components/preview/PosterPreview";
@@ -7,7 +8,7 @@ import { useViewportTier } from "@/hooks/use-viewport-tier";
 import { useUiStore } from "@/stores/uiStore";
 
 interface StudioLayoutProps {
-  iframeRef: React.RefObject<HTMLIFrameElement | null>;
+  iframeRef: (node: HTMLIFrameElement | null) => void;
 }
 
 export function StudioLayout({ iframeRef }: StudioLayoutProps) {
@@ -27,7 +28,8 @@ export function StudioLayout({ iframeRef }: StudioLayoutProps) {
             <TabsTrigger value="code">Code</TabsTrigger>
             <TabsTrigger value="preview">Preview</TabsTrigger>
           </TabsList>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-1">
+            {workspaceTab === "code" ? <ClearCodeButton /> : null}
             <CopyAiPromptMenu
               iconOnly={false}
               label="Prompt"

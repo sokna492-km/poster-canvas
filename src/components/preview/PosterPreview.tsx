@@ -2,7 +2,7 @@ import { PreviewCanvas } from "./PreviewCanvas";
 import { PreviewToolbar } from "./PreviewToolbar";
 
 interface PosterPreviewProps {
-  iframeRef: React.RefObject<HTMLIFrameElement | null>;
+  iframeRef: (node: HTMLIFrameElement | null) => void;
 }
 
 export function PosterPreview({ iframeRef }: PosterPreviewProps) {

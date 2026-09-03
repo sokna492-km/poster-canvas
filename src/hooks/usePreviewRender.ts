@@ -16,6 +16,8 @@ export function usePreviewRender(bridge: SandboxBridge | null): void {
 
   useEffect(() => {
     if (!bridge) return;
+    // Mobile Preview tab mounts the iframe late; wait for attach + sandbox-ready → run().
+    if (!bridge.isAttached) return;
 
     const code = useEditorStore.getState().code;
     const width = current?.width ?? 1080;

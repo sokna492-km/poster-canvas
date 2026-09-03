@@ -17,8 +17,7 @@ import { useProjectStore } from "@/stores/projectStore";
 import { useUiStore } from "@/stores/uiStore";
 
 export function PosterStudio() {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const bridge = useSandboxBridge(iframeRef);
+  const { bridge, iframeRef } = useSandboxBridge();
   const initTheme = useUiStore((s) => s.setTheme);
   const setOnboardingOpen = useUiStore((s) => s.setOnboardingOpen);
   const newProject = useProjectStore((s) => s.newProject);
