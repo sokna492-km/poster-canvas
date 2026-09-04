@@ -115,7 +115,7 @@ When `<Logo` appears in your code, the automatic corner overlay is skipped so th
 
 ### Default fonts
 
-The sandbox loads **IBM Plex Sans** (Latin) and **Kantumruy Pro** (Khmer). Khmer characters use Kantumruy Pro by default unless you set your own `font-family` via `style`, a Tailwind `font-*` class, or a custom `@font-face`.
+The sandbox loads **IBM Plex Sans** (Latin) and **Kantumruy Pro** (Khmer) from **same-origin** WOFF2 files (`public/sandbox/vendor/fonts/`), not Google Fonts. That keeps preview and html-to-image export on identical font bytes (important for Khmer line breaks). Khmer characters use Kantumruy Pro by default unless you set your own `font-family` via `style`, a Tailwind `font-*` class, or a custom `@font-face`.
 
 ```tsx
 {

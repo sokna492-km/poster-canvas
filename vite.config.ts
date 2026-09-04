@@ -1,6 +1,4 @@
-import { appendFileSync, mkdirSync } from "node:fs";
 import type { ServerResponse } from "node:http";
-import { dirname, join } from "node:path";
 import type { Connect, Plugin } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 import { devtools } from "@tanstack/devtools-vite";
@@ -11,54 +9,6 @@ import { defineConfig, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 const DEFAULT_BASE_PATH = "/poster-canvas";
-
-/** Dev-only: append NDJSON agent debug logs to workspace `debug-d12870.log`. */
-function agentDebugLogPlugin(): Plugin {
-  const logPath = join(process.cwd(), "debug-d12870.log");
-  const middleware: Connect.NextHandleFunction = (req, res, next) => {
-    const raw = req.url ?? "";
-    const pathname = raw.split("?")[0] ?? "";
-    if (!pathname.endsWith("/__agent_debug_log") && pathname !== "/__agent_debug_log") {
-      next();
-      return;
-    }
-    if (req.method === "OPTIONS") {
-      res.statusCode = 204;
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-      res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Debug-Session-Id");
-      res.end();
-      return;
-    }
-    if (req.method !== "POST") {
-      res.statusCode = 405;
-      res.end("Method Not Allowed");
-      return;
-    }
-    const chunks: Buffer[] = [];
-    req.on("data", (c) => chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)));
-    req.on("end", () => {
-      try {
-        mkdirSync(dirname(logPath), { recursive: true });
-        const text = Buffer.concat(chunks).toString("utf8") || "{}";
-        const line = text.includes("\n") ? text.trimEnd() : text;
-        appendFileSync(logPath, `${line}\n`, "utf8");
-        res.statusCode = 204;
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        res.end();
-      } catch (err) {
-        res.statusCode = 500;
-        res.end(String(err));
-      }
-    });
-  };
-  return {
-    name: "agent-debug-log",
-    configureServer(server) {
-      server.middlewares.use(middleware);
-    },
-  };
-}
 
 /**
  * Vite requires `base` to end with `/`. Rewrite `/poster-canvas` → `/poster-canvas/`
@@ -155,10 +105,13 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "::",
       port: 5173,
+      watch: {
+        // Large font binaries lock on Windows and crash Vite's FSWatcher (EBUSY).
+        ignored: ["**/public/sandbox/vendor/fonts/**"],
+      },
     },
     plugins: [
       ...(basePath ? [redirectRootToBase(basePath)] : []),
-      ...(mode === "development" ? [agentDebugLogPlugin()] : []),
       ...(mode === "development"
         ? [
             devtools({

@@ -1,0 +1,11 @@
+Poster sandbox fonts (same-origin for WYSIWYG export)
+
+Families:
+  - Kantumruy Pro — static WOFF2 weights 300–700 (+800/900→700), Khmer + Latin unicode-range
+  - IBM Plex Sans — Latin WOFF2 weights 300–700 (+800/900→700)
+
+Note: Variable TTF was tried and rejected — SVG foreignObject ignores variable axes,
+collapsing Khmer metrics. Static WOFF2 per weight is required for export fidelity.
+
+Source: Fontsource OFL builds
+License: SIL Open Font License 1.1 (see OFL-KantumruyPro.txt, OFL-IBMPlexSans.txt)

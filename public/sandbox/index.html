@@ -12,8 +12,8 @@
           extend: {
             fontFamily: {
               sans: [
-                '"IBM Plex Sans"',
                 '"Kantumruy Pro"',
+                '"IBM Plex Sans"',
                 "system-ui",
                 "sans-serif",
               ],
@@ -22,12 +22,8 @@
         },
       };
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Kantumruy+Pro:wght@300;400;500;600;700&family=Playfair+Display:wght@400;700&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Same-origin poster fonts (reliable html-to-image embed; see vendor/fonts/) -->
+    <link rel="stylesheet" href="./vendor/fonts/poster-fonts.css" />
     <!-- KaTeX 0.18.4 (vendored; same-origin fonts for reliable export) -->
     <link rel="stylesheet" href="./vendor/katex/katex.min.css" />
     <script src="./vendor/katex/katex.min.js"></script>
@@ -38,15 +34,21 @@
         margin: 0;
         padding: 0;
         background: transparent;
-        font-family: "IBM Plex Sans", "Kantumruy Pro", system-ui, sans-serif;
+        font-family: "Kantumruy Pro", "IBM Plex Sans", system-ui, sans-serif;
       }
       #poster-root {
         overflow: hidden;
         position: relative;
+        font-family: "Kantumruy Pro", "IBM Plex Sans", system-ui, sans-serif;
+        font-synthesis: none;
       }
       #fallback {
         font:
-          14px "JetBrains Mono",
+          14px ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Monaco,
+          Consolas,
           monospace;
         color: #a1a1aa;
         padding: 24px;
@@ -55,6 +57,6 @@
   </head>
   <body>
     <div id="poster-root"><div id="fallback">Loading sandbox…</div></div>
-    <script type="module" src="./main.js?v=dbg-99918c-1"></script>
+    <script type="module" src="./main.js?v=7"></script>
   </body>
 </html>

@@ -2,6 +2,18 @@
 
 Export runs in the preview sandbox (browser). Raster formats use [html-to-image](https://github.com/bubkoo/html-to-image); PDF uses [jsPDF](https://github.com/parallax/jsPDF); SVG uses [dom2svg](https://www.npmjs.com/package/dom2svg); PSD uses [ag-psd](https://github.com/Agamnentzar/ag-psd); PPTX uses [PptxGenJS](https://gitbrent.github.io/PptxGenJS/); XLSX uses SheetJS.
 
+## Fonts (WYSIWYG)
+
+Poster body fonts (**IBM Plex Sans**, **Kantumruy Pro**) are **same-origin** WOFF2 files under `public/sandbox/vendor/fonts/` (see `poster-fonts.css`). This matches the KaTeX vendor pattern and avoids Google Fonts unicode-range / re-fetch drift during export.
+
+Before each raster capture the sandbox:
+
+1. Calls `waitForPosterFonts()` (`fonts.load` with Khmer + Latin samples, then `fonts.check`)
+2. Builds options via `buildHtmlToImageOptions()` with a **session-cached** `fontEmbedCSS` from `html-to-image.getFontEmbedCSS(..., { preferredFontFormat: 'woff2' })`
+3. Sets `cacheBust: false` so same-origin font URLs are not rewritten with query strings
+
+PNG / JPG / WebP / PDF / PSD / PPTX all share these options so Khmer metrics match the live preview.
+
 ## Formats
 
 | Group    | Format           | Notes                                                                                |
@@ -23,7 +35,7 @@ Export runs in the preview sandbox (browser). Raster formats use [html-to-image]
 - SVG / CSV / XLSX ignore raster scale loops.
 - EPS / PSD / PPTX use the effective raster scale for the artboard.
 
-Constants: `src/core/export/exportDefaults.ts` (mirrored in `public/sandbox/exportHelpers.js`).
+Constants: `src/core/export/exportDefaults.ts` (mirrored in `public/sandbox/exportHelpers.js`). Capture option builders live only in `exportHelpers.js` (`buildHtmlToImageOptions`, `waitForPosterFonts`).
 
 ## Layered PSD
 

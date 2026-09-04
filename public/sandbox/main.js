@@ -11,6 +11,7 @@ import * as Babel from "https://esm.sh/@babel/standalone@7.26.4";
 import * as PosterCore from "./runtime.js";
 import {
   arrayBufferToBase64,
+  buildHtmlToImageOptions,
   buildLayerPlan,
   buildSectionedCsv,
   clampExportScale,
@@ -29,9 +30,11 @@ import {
   MIN_PDF_EXPORT_BYTES,
   PDF_EXPORT_QUALITY,
   PPTX_PX_PER_INCH,
+  preparePosterDomForExport,
   sanitizeIllustratorSvg,
   scanDomForLayers,
   scrapePosterData,
+  waitForPosterFonts,
 } from "./exportHelpers.js";
 
 const rootEl = document.getElementById("poster-root");
@@ -81,59 +84,8 @@ async function ensureKatex() {
   }
 }
 
-const AGENT_CODE_REV = "dbg-99918c-1";
-
 function send(message) {
   parent.postMessage({ source: "poster-sandbox", ...message }, "*");
-}
-
-function agentLogUrl() {
-  try {
-    return new URL("../__agent_debug_log", location.href).href;
-  } catch {
-    return "/poster-canvas/__agent_debug_log";
-  }
-}
-
-function debugLog(hypothesisId, location, message, data) {
-  const payload = {
-    sessionId: "d12870",
-    runId: "pre-fix",
-    hypothesisId,
-    location,
-    message,
-    data: { codeRev: AGENT_CODE_REV, ...data },
-    timestamp: Date.now(),
-  };
-  send({ type: "debug-log", hypothesisId, location, message, data: payload.data });
-  // #region agent log
-  fetch("http://127.0.0.1:7406/ingest/a837067b-6229-492c-9bf2-1286c0a5726f", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "d12870" },
-    body: JSON.stringify(payload),
-  }).catch(() => {});
-  fetch(agentLogUrl(), {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "99918c" },
-    body: JSON.stringify(payload),
-  }).catch(() => {});
-  // #endregion
-}
-
-function sampleOpaquePixels(canvas) {
-  if (!canvas?.width || !canvas?.height) return { opaque: 0, total: 0, ratio: 0 };
-  try {
-    const ctx = canvas.getContext("2d");
-    const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    let opaque = 0;
-    for (let i = 3; i < data.length; i += 4) {
-      if (data[i] > 8) opaque += 1;
-    }
-    const total = canvas.width * canvas.height;
-    return { opaque, total, ratio: total ? opaque / total : 0 };
-  } catch {
-    return { opaque: -1, total: -1, ratio: -1 };
-  }
 }
 
 function toDiagnostic(error, kind) {
@@ -245,13 +197,11 @@ async function render(payload) {
         ),
       ),
     );
-    // Wait for KaTeX (and Google) webfonts so preview/export aren't missing glyphs.
-    if (document.fonts?.ready) {
-      await Promise.race([
-        document.fonts.ready,
-        new Promise((resolve) => setTimeout(resolve, 3000)),
-      ]);
-    }
+    // Wait for poster + KaTeX webfonts so preview/export aren't missing glyphs.
+    await Promise.race([
+      waitForPosterFonts({ timeoutMs: 8000 }),
+      new Promise((resolve) => setTimeout(resolve, 3000)),
+    ]);
     send({ type: "rendered" });
   } catch (error) {
     clearPreview();
@@ -319,45 +269,14 @@ async function captureCanonicalSvg() {
 async function capturePosterLayers(lib, scale) {
   const w = rootEl.offsetWidth;
   const h = rootEl.offsetHeight;
-  const options = {
+  const options = await buildHtmlToImageOptions(lib, rootEl, {
     pixelRatio: scale,
     width: w,
     height: h,
-    cacheBust: true,
-    skipFonts: false,
-  };
+  });
 
   let marked = collectTopLevelMarked(rootEl);
   const bg = detectSolidBackground(rootEl);
-  // #region agent log
-  const allMarkerNodes = Array.from(rootEl.querySelectorAll("[data-poster-layer]")).map((el) => {
-    const type = el.getAttribute("data-poster-layer") || "layer";
-    const nestedLeaf = Array.from(el.querySelectorAll("[data-poster-layer]")).some((child) => {
-      const t = child.getAttribute("data-poster-layer");
-      return t && !CONTAINER_LAYER_TYPES.has(t);
-    });
-    return {
-      type,
-      name: el.getAttribute("data-poster-layer-name") || type,
-      tag: el.tagName,
-      nestedLeaf,
-      skippedContainer: CONTAINER_LAYER_TYPES.has(type),
-    };
-  });
-  debugLog("A", "main.js:capturePosterLayers:marked", "Marked layers and DOM probe", {
-    scale,
-    rootW: w,
-    rootH: h,
-    markedCount: marked.length,
-    markedTypes: marked.map((m) => m.type),
-    markedNames: marked.map((m) => m.name),
-    allLayerAttrCount: allMarkerNodes.length,
-    allMarkers: allMarkerNodes.slice(0, 40),
-    bg: bg ? String(bg).slice(0, 40) : null,
-    rootChildCount: rootEl.children.length,
-    exportHelpersHasHelpers: typeof collectTopLevelMarked === "function",
-  });
-  // #endregion
 
   // DOM auto-scan fallback: when no @poster/core markers exist, scan the visible DOM
   // for text-bearing elements and images so PSD and PPTX still get structure.
@@ -398,14 +317,6 @@ async function capturePosterLayers(lib, scale) {
     hasContent,
     marked,
   });
-  // #region agent log
-  debugLog("A", "main.js:capturePosterLayers:plan", "Layer plan built", {
-    hasContent,
-    planTypes: plan.map((p) => p.type),
-    planNames: plan.map((p) => p.name),
-    planHasEl: plan.map((p) => Boolean(p.el)),
-  });
-  // #endregion
 
   const layers = [];
   for (const item of plan) {
@@ -456,11 +367,10 @@ async function capturePosterLayers(lib, scale) {
       try {
         const rootRect = rootEl.getBoundingClientRect();
         const rect = item.el.getBoundingClientRect();
-        const canvas = await lib.toCanvas(item.el, {
-          pixelRatio: scale,
-          cacheBust: true,
-          skipFonts: false,
-        });
+        const canvas = await lib.toCanvas(
+          item.el,
+          await buildHtmlToImageOptions(lib, rootEl, { pixelRatio: scale }),
+        );
         layers.push({
           id: item.id,
           name: item.name,
@@ -477,24 +387,6 @@ async function capturePosterLayers(lib, scale) {
       }
     }
   }
-
-  // #region agent log
-  debugLog("C", "main.js:capturePosterLayers:result", "Captured layer canvases", {
-    count: layers.length,
-    layers: layers.map((l) => ({
-      id: l.id,
-      name: l.name,
-      type: l.type,
-      left: l.left,
-      top: l.top,
-      w: l.width,
-      h: l.height,
-      cw: l.canvas?.width,
-      ch: l.canvas?.height,
-      opaque: sampleOpaquePixels(l.canvas),
-    })),
-  });
-  // #endregion
 
   return layers;
 }
@@ -516,7 +408,6 @@ async function buildPsdDataUrl(lib, scale) {
     /* browser canvas init via initializeCanvas above */
   }
   const writePsd = agPsd.writePsd || agPsd.default?.writePsd;
-  const readPsd = agPsd.readPsd || agPsd.default?.readPsd;
   if (typeof writePsd !== "function") throw new Error("ag-psd writePsd unavailable");
   const w = rootEl.offsetWidth;
   const h = rootEl.offsetHeight;
@@ -538,29 +429,6 @@ async function buildPsdDataUrl(lib, scale) {
       canvas,
     };
   });
-  // #region agent log
-  debugLog("B", "main.js:buildPsdDataUrl:beforeWrite", "PSD children about to write", {
-    scale,
-    layerCount: layers.length,
-    children: children.map((c) => ({
-      name: c.name,
-      left: c.left,
-      top: c.top,
-      right: c.right,
-      bottom: c.bottom,
-      cw: c.canvas?.width,
-      ch: c.canvas?.height,
-      idw: c.imageData?.width,
-      idh: c.imageData?.height,
-      opaque: sampleOpaquePixels(c.canvas),
-    })),
-    docW: Math.round(w * scale),
-    docH: Math.round(h * scale),
-    writePsdType: typeof writePsd,
-    hasInitializeCanvas: typeof agPsd.initializeCanvas === "function",
-    agPsdKeys: Object.keys(agPsd || {}).slice(0, 20),
-  });
-  // #endregion
   const composite = document.createElement("canvas");
   composite.width = Math.round(w * scale);
   composite.height = Math.round(h * scale);
@@ -577,62 +445,6 @@ async function buildPsdDataUrl(lib, scale) {
     },
     { generateThumbnail: true, noBackground: true },
   );
-  const byteLen =
-    buffer?.byteLength ?? buffer?.length ?? (buffer?.buffer ? buffer.buffer.byteLength : -1);
-  const bufferMeta = {
-    type: Object.prototype.toString.call(buffer),
-    isArrayBuffer: buffer instanceof ArrayBuffer,
-    isUint8Array: typeof Uint8Array !== "undefined" && buffer instanceof Uint8Array,
-    byteLength: buffer?.byteLength ?? null,
-    length: buffer?.length ?? null,
-    byteOffset: buffer?.byteOffset ?? null,
-    underlyingBufferLen: buffer?.buffer?.byteLength ?? null,
-    viewMatchesBuffer:
-      buffer instanceof Uint8Array
-        ? buffer.byteOffset === 0 && buffer.byteLength === buffer.buffer.byteLength
-        : buffer instanceof ArrayBuffer
-          ? true
-          : null,
-    signature: (() => {
-      try {
-        const u8 =
-          buffer instanceof ArrayBuffer
-            ? new Uint8Array(buffer, 0, 4)
-            : new Uint8Array(buffer.buffer || buffer, buffer.byteOffset || 0, 4);
-        return String.fromCharCode(...u8);
-      } catch {
-        return "err";
-      }
-    })(),
-  };
-  let readBackChildren = [];
-  try {
-    if (typeof readPsd === "function") {
-      const parsed = readPsd(buffer, {
-        skipCompositeImageData: true,
-        skipThumbnail: true,
-      });
-      readBackChildren = (parsed.children || []).map((c) => ({
-        name: c.name,
-        left: c.left,
-        top: c.top,
-        right: c.right,
-        bottom: c.bottom,
-        hasCanvas: Boolean(c.canvas),
-        hasImageData: Boolean(c.imageData),
-      }));
-    }
-  } catch (err) {
-    readBackChildren = [{ name: `readPsd-error:${String(err?.message ?? err)}` }];
-  }
-  // #region agent log
-  debugLog("C", "main.js:buildPsdDataUrl:afterWrite", "PSD buffer written", {
-    byteLen,
-    bufferMeta,
-    readBackChildren,
-    readBackCount: readBackChildren.length,
-  });
-  // #endregion
   const b64 = arrayBufferToBase64(buffer);
   return {
     data: `data:image/vnd.adobe.photoshop;base64,${b64}`,
@@ -669,17 +481,17 @@ async function buildPptxDataUrl(lib, scale) {
     slide.background = { color: bg.startsWith("#") ? bg.replace("#", "") : hex };
   }
   const rootRect = rootEl.getBoundingClientRect();
-  const objectMeta = [];
   if (marked.length === 0) {
     // No layer markers — full-bleed JPEG raster fallback.
-    const canvas = await lib.toCanvas(rootEl, {
-      pixelRatio: scale,
-      width: cssW,
-      height: cssH,
-      cacheBust: true,
-      skipFonts: false,
-      backgroundColor: "#ffffff",
-    });
+    const canvas = await lib.toCanvas(
+      rootEl,
+      await buildHtmlToImageOptions(lib, rootEl, {
+        pixelRatio: scale,
+        width: cssW,
+        height: cssH,
+        backgroundColor: "#ffffff",
+      }),
+    );
     slide.addImage({
       data: canvas.toDataURL("image/jpeg", LOSSY_EXPORT_QUALITY),
       x: 0,
@@ -687,7 +499,6 @@ async function buildPptxDataUrl(lib, scale) {
       w: wIn,
       h: hIn,
     });
-    objectMeta.push({ kind: "raster-fallback", name: "Content", x: 0, y: 0, w: wIn, h: hIn });
   } else {
     // Render the poster background (gradient, decorative elements) with marked layers
     // temporarily hidden so they appear only as editable native objects, not doubled.
@@ -695,14 +506,15 @@ async function buildPptxDataUrl(lib, scale) {
     const restoreBg = hideElements(markedEls, true);
     let bgCanvas;
     try {
-      bgCanvas = await lib.toCanvas(rootEl, {
-        pixelRatio: scale,
-        width: cssW,
-        height: cssH,
-        cacheBust: true,
-        skipFonts: false,
-        backgroundColor: "#ffffff",
-      });
+      bgCanvas = await lib.toCanvas(
+        rootEl,
+        await buildHtmlToImageOptions(lib, rootEl, {
+          pixelRatio: scale,
+          width: cssW,
+          height: cssH,
+          backgroundColor: "#ffffff",
+        }),
+      );
     } finally {
       restoreBg();
     }
@@ -713,7 +525,6 @@ async function buildPptxDataUrl(lib, scale) {
       w: wIn,
       h: hIn,
     });
-    objectMeta.push({ kind: "background", name: "Background", x: 0, y: 0, w: wIn, h: hIn });
     for (const item of marked) {
       if (!item.el) continue;
       const rect = item.el.getBoundingClientRect();
@@ -737,43 +548,26 @@ async function buildPptxDataUrl(lib, scale) {
           valign: "top",
           margin: 0,
         });
-        objectMeta.push({ kind: "text", name: item.name, x, y, w, h });
       } else if (item.el.tagName === "IMG") {
         const src = item.el.currentSrc || item.el.src || "";
         if (src.startsWith("data:")) {
           slide.addImage({ data: src, x, y, w, h });
         } else {
-          const canvas = await lib.toCanvas(item.el, {
-            pixelRatio: scale,
-            cacheBust: true,
-            skipFonts: false,
-          });
+          const canvas = await lib.toCanvas(
+            item.el,
+            await buildHtmlToImageOptions(lib, rootEl, { pixelRatio: scale }),
+          );
           slide.addImage({ data: canvas.toDataURL("image/png"), x, y, w, h });
         }
-        objectMeta.push({ kind: "image", name: item.name, x, y, w, h });
       } else {
-        const canvas = await lib.toCanvas(item.el, {
-          pixelRatio: scale,
-          cacheBust: true,
-          skipFonts: false,
-        });
+        const canvas = await lib.toCanvas(
+          item.el,
+          await buildHtmlToImageOptions(lib, rootEl, { pixelRatio: scale }),
+        );
         slide.addImage({ data: canvas.toDataURL("image/png"), x, y, w, h });
-        objectMeta.push({ kind: "raster", name: item.name, x, y, w, h });
       }
     }
   }
-  // #region agent log
-  debugLog("F", "main.js:buildPptxDataUrl", "PPTX native objects", {
-    scale,
-    wIn,
-    hIn,
-    markedCount: marked.length,
-    objectCount: objectMeta.length,
-    objects: objectMeta,
-    mode: marked.length === 0 ? "raster-fallback" : "native-objects",
-    codePath: "buildPptxDataUrl-native",
-  });
-  // #endregion
   const b64 = await pptx.write({ outputType: "base64" });
   return {
     data: `data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,${b64}`,
@@ -812,67 +606,70 @@ async function buildDataExports(format) {
 }
 
 async function captureExport(lib, format, scale) {
-  if (document.fonts?.ready) {
-    await document.fonts.ready;
-  }
-  const options = {
-    pixelRatio: scale,
-    width: rootEl.offsetWidth,
-    height: rootEl.offsetHeight,
-    cacheBust: true,
-    skipFonts: false,
-  };
+  await waitForPosterFonts({ timeoutMs: 10_000 });
+  const restoreFonts = preparePosterDomForExport(rootEl);
 
-  if (format === "png") {
-    return { data: await lib.toPng(rootEl, options), mimeType: "image/png" };
-  }
-  if (format === "jpg") {
-    return {
-      data: await lib.toJpeg(rootEl, {
+  try {
+    const options = await buildHtmlToImageOptions(lib, rootEl, {
+      pixelRatio: scale,
+      width: rootEl.offsetWidth,
+      height: rootEl.offsetHeight,
+    });
+
+    if (format === "png") {
+      const data = await lib.toPng(rootEl, options);
+      return { data, mimeType: "image/png" };
+    }
+    if (format === "jpg") {
+      return {
+        data: await lib.toJpeg(rootEl, {
+          ...options,
+          quality: LOSSY_EXPORT_QUALITY,
+          backgroundColor: "#ffffff",
+        }),
+        mimeType: "image/jpeg",
+      };
+    }
+    if (format === "webp") {
+      const canvas = await lib.toCanvas(rootEl, options);
+      return {
+        data: canvas.toDataURL("image/webp", LOSSY_EXPORT_QUALITY),
+        mimeType: "image/webp",
+      };
+    }
+    if (format === "svg") {
+      return { data: await captureCanonicalSvg(), mimeType: "image/svg+xml" };
+    }
+    if (format === "pdf") {
+      const jpeg = await lib.toJpeg(rootEl, {
         ...options,
-        quality: LOSSY_EXPORT_QUALITY,
+        quality: PDF_EXPORT_QUALITY,
         backgroundColor: "#ffffff",
-      }),
-      mimeType: "image/jpeg",
-    };
+      });
+      const { jsPDF } = await import("https://esm.sh/jspdf@2.5.2");
+      const w = rootEl.offsetWidth;
+      const h = rootEl.offsetHeight;
+      const pdf = new jsPDF({
+        orientation: w > h ? "landscape" : "portrait",
+        unit: "px",
+        format: [w, h],
+      });
+      pdf.addImage(jpeg, "JPEG", 0, 0, w, h);
+      return { data: pdf.output("datauristring"), mimeType: "application/pdf" };
+    }
+    if (format === "psd") {
+      return buildPsdDataUrl(lib, scale);
+    }
+    if (format === "pptx") {
+      return buildPptxDataUrl(lib, scale);
+    }
+    if (format === "csv" || format === "xlsx") {
+      return buildDataExports(format);
+    }
+    throw new Error(`Unsupported format: ${format}`);
+  } finally {
+    restoreFonts();
   }
-  if (format === "webp") {
-    const canvas = await lib.toCanvas(rootEl, options);
-    return {
-      data: canvas.toDataURL("image/webp", LOSSY_EXPORT_QUALITY),
-      mimeType: "image/webp",
-    };
-  }
-  if (format === "svg") {
-    return { data: await captureCanonicalSvg(), mimeType: "image/svg+xml" };
-  }
-  if (format === "pdf") {
-    const jpeg = await lib.toJpeg(rootEl, {
-      ...options,
-      quality: PDF_EXPORT_QUALITY,
-      backgroundColor: "#ffffff",
-    });
-    const { jsPDF } = await import("https://esm.sh/jspdf@2.5.2");
-    const w = rootEl.offsetWidth;
-    const h = rootEl.offsetHeight;
-    const pdf = new jsPDF({
-      orientation: w > h ? "landscape" : "portrait",
-      unit: "px",
-      format: [w, h],
-    });
-    pdf.addImage(jpeg, "JPEG", 0, 0, w, h);
-    return { data: pdf.output("datauristring"), mimeType: "application/pdf" };
-  }
-  if (format === "psd") {
-    return buildPsdDataUrl(lib, scale);
-  }
-  if (format === "pptx") {
-    return buildPptxDataUrl(lib, scale);
-  }
-  if (format === "csv" || format === "xlsx") {
-    return buildDataExports(format);
-  }
-  throw new Error(`Unsupported format: ${format}`);
 }
 
 async function runExport(payload) {

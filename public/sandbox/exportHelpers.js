@@ -308,6 +308,287 @@ export function arrayBufferToBase64(buffer) {
 
 
 
+/** Specs checked before export so Khmer/Latin faces match the live preview. */
+export const POSTER_FONT_CHECK_SPECS = [
+  '400 32px "Kantumruy Pro"',
+  '700 32px "Kantumruy Pro"',
+  '900 32px "Kantumruy Pro"',
+  '400 32px "IBM Plex Sans"',
+  '700 32px "IBM Plex Sans"',
+];
+
+/** Sample strings that force Khmer + Latin coverage to load. */
+const POSTER_FONT_LOAD_SAMPLES = [
+  { family: "Kantumruy Pro", weights: [400, 600, 700, 900], text: "Aaសាឆ្នាំដំបូង" },
+  { family: "IBM Plex Sans", weights: [400, 700, 900], text: "AaGg" },
+];
+
+/** Same-origin static WOFF2 embeds (variable TTF breaks weight axes in foreignObject). */
+const KHMER_RANGE = "U+1780-17FF,U+19E0-19FF,U+200C-200D,U+25CC";
+const LATIN_RANGE =
+  "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD";
+
+function buildKantumruyEmbedFiles() {
+  const weights = [300, 400, 500, 600, 700];
+  const faces = [];
+  for (const w of weights) {
+    faces.push({
+      family: "Kantumruy Pro",
+      weight: String(w),
+      style: "normal",
+      path: `./vendor/fonts/files/kantumruy-pro-khmer-${w}-normal.woff2`,
+      format: "woff2",
+      mime: "font/woff2",
+      unicodeRange: KHMER_RANGE,
+    });
+    faces.push({
+      family: "Kantumruy Pro",
+      weight: String(w),
+      style: "normal",
+      path: `./vendor/fonts/files/kantumruy-pro-latin-${w}-normal.woff2`,
+      format: "woff2",
+      mime: "font/woff2",
+      unicodeRange: LATIN_RANGE,
+    });
+  }
+  for (const w of [800, 900]) {
+    faces.push({
+      family: "Kantumruy Pro",
+      weight: String(w),
+      style: "normal",
+      path: "./vendor/fonts/files/kantumruy-pro-khmer-700-normal.woff2",
+      format: "woff2",
+      mime: "font/woff2",
+      unicodeRange: KHMER_RANGE,
+    });
+    faces.push({
+      family: "Kantumruy Pro",
+      weight: String(w),
+      style: "normal",
+      path: "./vendor/fonts/files/kantumruy-pro-latin-700-normal.woff2",
+      format: "woff2",
+      mime: "font/woff2",
+      unicodeRange: LATIN_RANGE,
+    });
+  }
+  return faces;
+}
+
+function buildPlexEmbedFiles() {
+  const faces = [300, 400, 500, 600, 700].map((w) => ({
+    family: "IBM Plex Sans",
+    weight: String(w),
+    style: "normal",
+    path: `./vendor/fonts/files/ibm-plex-sans-latin-${w}-normal.woff2`,
+    format: "woff2",
+    mime: "font/woff2",
+    unicodeRange: LATIN_RANGE,
+  }));
+  for (const w of [800, 900]) {
+    faces.push({
+      family: "IBM Plex Sans",
+      weight: String(w),
+      style: "normal",
+      path: "./vendor/fonts/files/ibm-plex-sans-latin-700-normal.woff2",
+      format: "woff2",
+      mime: "font/woff2",
+      unicodeRange: LATIN_RANGE,
+    });
+  }
+  return faces;
+}
+
+const POSTER_FONT_EMBED_FILES = [...buildKantumruyEmbedFiles(), ...buildPlexEmbedFiles()];
+
+/**
+ * Wait until document.fonts.ready and key poster faces are loaded.
+ * Uses fonts.load with Khmer+Latin samples so unicode-range subsets resolve.
+ * @param {{ timeoutMs?: number }} [opts]
+ */
+export async function waitForPosterFonts(opts = {}) {
+  const timeoutMs = opts.timeoutMs ?? 10_000;
+  if (typeof document === "undefined" || !document.fonts) return;
+  try {
+    await document.fonts.ready;
+  } catch {
+    /* ignore */
+  }
+
+  const loads = [];
+  for (const sample of POSTER_FONT_LOAD_SAMPLES) {
+    for (const weight of sample.weights) {
+      loads.push(
+        document.fonts.load(`${weight} 32px "${sample.family}"`, sample.text).catch(() => []),
+      );
+    }
+  }
+  await Promise.race([
+    Promise.all(loads),
+    new Promise((resolve) => setTimeout(resolve, timeoutMs)),
+  ]);
+
+  const deadline = Date.now() + Math.min(2000, timeoutMs);
+  while (Date.now() < deadline) {
+    const ok = POSTER_FONT_CHECK_SPECS.every((spec) => {
+      try {
+        return document.fonts.check(spec);
+      } catch {
+        return false;
+      }
+    });
+    if (ok) return;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+}
+
+/** Module-scoped cache: same fontEmbedCSS for every capture in this sandbox session. */
+let cachedFontEmbedCSS = null;
+let fontEmbedCSSPromise = null;
+
+/** Reset cache (tests / hot reload). */
+export function clearFontEmbedCSSCache() {
+  cachedFontEmbedCSS = null;
+  fontEmbedCSSPromise = null;
+}
+
+/**
+ * Build deterministic @font-face CSS with data-URL sources (same-origin files only).
+ * Does not call html-to-image getFontEmbedCSS (which can mix in stale Google Fonts faces).
+ */
+export async function buildManualFontEmbedCSS() {
+  const rules = [];
+  for (const file of POSTER_FONT_EMBED_FILES) {
+    const url = new URL(file.path, location.href).href;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Font fetch failed: ${file.path} (${res.status})`);
+    const b64 = arrayBufferToBase64(await res.arrayBuffer());
+    const range = file.unicodeRange ? `unicode-range:${file.unicodeRange};` : "";
+    rules.push(
+      `@font-face{font-family:'${file.family}';font-style:${file.style};font-weight:${file.weight};font-display:block;src:url(data:${file.mime};base64,${b64}) format('${file.format}');${range}}`,
+    );
+  }
+  return rules.join("");
+}
+
+/**
+ * Precompute fontEmbedCSS once from vendored files.
+ * @param {typeof import("html-to-image")} _lib unused (kept for call-site compatibility)
+ * @param {HTMLElement} _node unused
+ */
+export async function ensureFontEmbedCSS(_lib, _node) {
+  if (cachedFontEmbedCSS != null) return cachedFontEmbedCSS;
+  if (!fontEmbedCSSPromise) {
+    fontEmbedCSSPromise = (async () => {
+      await waitForPosterFonts();
+      cachedFontEmbedCSS = await buildManualFontEmbedCSS();
+      return cachedFontEmbedCSS;
+    })().catch((err) => {
+      fontEmbedCSSPromise = null;
+      throw err;
+    });
+  }
+  return fontEmbedCSSPromise;
+}
+
+/**
+ * Reorder stacks so Kantumruy is first, drop Google Fonts links, inject export CSS.
+ * foreignObject often ignores unicode-range and falls back when IBM Plex is first.
+ */
+export function preparePosterDomForExport(root) {
+  if (!root || typeof document === "undefined") return () => {};
+
+  for (const link of [...document.querySelectorAll('link[rel="stylesheet"]')]) {
+    const href = link.href || "";
+    if (/fonts\.googleapis\.com|fonts\.gstatic\.com/i.test(href)) {
+      link.remove();
+    }
+  }
+
+  const style = document.createElement("style");
+  style.setAttribute("data-poster-export-fonts", "1");
+  style.textContent = `
+    #poster-root, #poster-root *:not(script):not(style) {
+      font-family: "Kantumruy Pro", "IBM Plex Sans", system-ui, sans-serif !important;
+    }
+    #poster-root .font-mono, #poster-root [class*="font-mono"] {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // html-to-image SVG foreignObject re-measures Khmer and can wrap single-line runs.
+  // Only freeze leaves that are already ONE line in the live preview — never force
+  // nowrap onto intentional multi-line body copy (scrollWidth<=clientWidth is true for those too).
+  const frozen = [];
+  const khmerRe = /[\u1780-\u17FF]/;
+  const freezeWalk = (el) => {
+    if (!el || el.nodeType !== 1) return;
+    const text = (el.textContent || "").trim();
+    if (text && khmerRe.test(text) && el.children.length === 0) {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const rects = Array.from(range.getClientRects()).filter((r) => r.width > 0 && r.height > 0);
+      // Distinct visual rows (getClientRects can return multiple boxes on one line for Khmer clusters)
+      const rowTops = [];
+      for (const r of rects) {
+        if (!rowTops.some((t) => Math.abs(t - r.top) < 2)) rowTops.push(r.top);
+      }
+      if (rowTops.length === 1) {
+        frozen.push({
+          el,
+          whiteSpace: el.style.whiteSpace,
+          wordBreak: el.style.wordBreak,
+          overflowWrap: el.style.overflowWrap,
+        });
+        el.style.whiteSpace = "nowrap";
+        el.style.wordBreak = "keep-all";
+        el.style.overflowWrap = "normal";
+      }
+    }
+    for (const child of el.children) freezeWalk(child);
+  };
+  freezeWalk(root);
+  root.setAttribute("data-poster-frozen-lines", String(frozen.length));
+  root.setAttribute("data-poster-frozen-mode", "single-line-only");
+
+  return () => {
+    style.remove();
+    root.removeAttribute("data-poster-frozen-lines");
+    root.removeAttribute("data-poster-frozen-mode");
+    for (const item of frozen) {
+      item.el.style.whiteSpace = item.whiteSpace;
+      item.el.style.wordBreak = item.wordBreak;
+      item.el.style.overflowWrap = item.overflowWrap;
+    }
+  };
+}
+
+/**
+ * Stable html-to-image options so export metrics match the live preview.
+ * Uses cached fontEmbedCSS; does not cache-bust same-origin font URLs.
+ * Do NOT set preferredFontFormat — it can strip our Kantumruy TTF when set to woff2.
+ *
+ * @param {typeof import("html-to-image")} lib
+ * @param {HTMLElement} node
+ * @param {{ pixelRatio?: number, width?: number, height?: number } & Record<string, unknown>} [extra]
+ */
+export async function buildHtmlToImageOptions(lib, node, extra = {}) {
+  const fontEmbedCSS = await ensureFontEmbedCSS(lib, node);
+  const { pixelRatio, width, height, ...rest } = extra;
+  const options = {
+    skipFonts: false,
+    fontEmbedCSS,
+    cacheBust: false,
+    ...rest,
+  };
+  if (pixelRatio != null) options.pixelRatio = pixelRatio;
+  if (width != null) options.width = width;
+  else if (node?.offsetWidth) options.width = node.offsetWidth;
+  if (height != null) options.height = height;
+  else if (node?.offsetHeight) options.height = node.offsetHeight;
+  return options;
+}
+
 export function fillSolidCanvas(width, height, cssColor, scale) {
   const w = Math.max(1, Math.round(width * scale));
   const h = Math.max(1, Math.round(height * scale));
